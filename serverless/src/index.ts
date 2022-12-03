@@ -2,11 +2,16 @@ import serverlessExpress from '@vendia/serverless-express';
 import express from 'express';
 import twilio from 'twilio';
 import { getCurrentInvoke } from '@vendia/serverless-express';
+import { slackWebhookRouter } from './routes/webhooks/slack';
+import { twilioWebhookRouter } from './routes/webhooks/twilio';
 
 const tilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
 const VoiceResponse = twilio.twiml.VoiceResponse;
 
 const app = express();
+
+app.use('/webhooks/slack', slackWebhookRouter);
+app.use('/webhooks/twilio', twilioWebhookRouter);
 
 app.get('/test', (req, res) => {
   res.json({ hello: 'world' });
