@@ -1,6 +1,7 @@
 import serverlessExpress from '@vendia/serverless-express';
 import express from 'express';
 import twilio from 'twilio';
+import { getCurrentInvoke } from '@vendia/serverless-express';
 
 const tilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
 const VoiceResponse = twilio.twiml.VoiceResponse;
@@ -20,7 +21,8 @@ app.get('/twilio_call_test', async (req, res) => {
     },
     'オッス!!オラゴクウ!!',
   );
-  //const currentBaseUrl = ['https://' + res.hostname, request.awsLambda.event.requestContext.stage].join('/');
+  const currentInvoke = getCurrentInvoke();
+  const currentBaseUrl = [req.protocol + '://' + req.get('host'), currentInvoke.event.requestContext.stage].join('/');
   await tilioClient.calls.create({
     twiml: twiml.toString(),
     from: process.env.TWILIO_US_PHONE_NUMBER,
