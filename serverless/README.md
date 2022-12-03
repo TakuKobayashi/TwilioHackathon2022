@@ -25,3 +25,9 @@ yarn run serverless offline start
 ## 主に開発している場所
 
 `src/index.ts` を起点に開発を進めて行きます
+
+## deploy
+
+Github Actionsを使い、`master`ブランチにpushされたものは自動的にAWS LambdaにDeployされるようになっています
+deployのレシピについては[こちら](/.github/workflows)より確認できます。
+Github ActionsによるDeployの様子は[こちら](https://github.com/TakuKobayashi/TwilioHackathon2022/actions)より確認ができます。
