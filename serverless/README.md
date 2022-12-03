@@ -31,3 +31,12 @@ yarn run serverless offline start
 Github Actionsを使い、`master`ブランチにpushされたものは自動的にAWS LambdaにDeployされるようになっています
 deployのレシピについては[こちら](/.github/workflows)より確認できます。
 Github ActionsによるDeployの様子は[こちら](https://github.com/TakuKobayashi/TwilioHackathon2022/actions)より確認ができます。
+
+## deploy先の確認方法
+AWS Lambdaに反映されたものの確認方法は以下の通りのURLにて確認できます。
+
+`https://s5bicmgli7.execute-api.ap-northeast-1.amazonaws.com/production/パス名`
+
+とりあえず、以下のURLにアクセスすると何か表示されます
+
+https://s5bicmgli7.execute-api.ap-northeast-1.amazonaws.com/production/test
