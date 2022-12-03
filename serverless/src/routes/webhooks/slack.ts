@@ -105,7 +105,7 @@ slackWebhookRouter.post('/recieved_event', async (req: Request, res: Response, n
   const webhookBody = JSON.parse(req.body);
   // challengeが行われたときのresponse
   if(webhookBody.type == 'url_verification'){
-    console.log("url verifacation")
+    console.log("url verifacation");
     // res.json({challenge: webhookBody.challenge});
   // 何かしらのイベント二体するcallback
   }else if(webhookBody.type == 'event_callback'){
