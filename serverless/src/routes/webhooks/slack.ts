@@ -14,6 +14,7 @@ slackWebhookRouter.get('/', async (req: Request, res: Response, next: NextFuncti
 slackWebhookRouter.post('/recieved_event', async (req: Request, res: Response, next: NextFunction) => {
   console.log(req.query)
   console.log(req.body)
+  // メッセージのwebhookを取得した場合の内容
   // {
   //   "token":"...",
   //   "team_id":"...",
@@ -69,6 +70,38 @@ slackWebhookRouter.post('/recieved_event', async (req: Request, res: Response, n
   //   "is_ext_shared_channel":false,
   //   "event_context":"eventCsontext"
   //}
+  //リアクションされた時のwebhook
+  //{
+  //  "token":"...",
+  //  "team_id":"...",
+  //  "api_app_id":"...",
+  //  "event":{
+  //    "type":"reaction_added",
+  //    "user":"リアクションしたUserのId",
+  //    "reaction":"white_check_mark", ← リアクション名
+  //    "item":{
+  //      "type":"message",
+  //      "channel":"...",
+  //      "ts":"1670061565.586719"
+  //    },
+  //    "item_user":"リアクション元の投稿したUserのId",
+  //    "event_ts":"1670061874.009200"
+  //  },
+  //  "type":"event_callback",
+  //  "event_id":"eventId",
+  //  "event_time":1670061874,
+  //  "authorizations":[
+  //    {
+  //      "enterprise_id":null,
+  //      "team_id":"teamId",
+  //      "user_id":"リアクションしたUserのId",
+  //      "is_bot":false,
+  //      "is_enterprise_install":false
+  //    }
+  //  ],
+  //  "is_ext_shared_channel":false,
+  //  "event_context":"..."
+  //}
   const webhookBody = JSON.parse(req.body);
   // challengeが行われたときのresponse
   if(webhookBody.type == 'url_verification'){
@@ -78,6 +111,9 @@ slackWebhookRouter.post('/recieved_event', async (req: Request, res: Response, n
   }else if(webhookBody.type == 'event_callback'){
     // チャンネルにテキストが投稿された時の処理
     if(webhookBody.event.type == "message"){
+
+    // リアクションが行われた時の処理
+    }else if(webhookBody.event.type == "reaction_added"){
 
     }
   }
