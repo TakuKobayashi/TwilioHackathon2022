@@ -1,11 +1,11 @@
 import serverlessExpress from '@vendia/serverless-express';
 import express from 'express';
 import twilio from 'twilio';
+import { twilioCreateCall } from './commons/twilio';
 import { getCurrentInvoke } from '@vendia/serverless-express';
 import { slackWebhookRouter } from './routes/webhooks/slack';
 import { twilioWebhookRouter } from './routes/webhooks/twilio';
 
-const tilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
 const VoiceResponse = twilio.twiml.VoiceResponse;
 
 const app = express();
@@ -28,13 +28,11 @@ app.get('/twilio_call_test', async (req, res) => {
   );
   const currentInvoke = getCurrentInvoke();
   const currentBaseUrl = [req.protocol + '://' + req.get('host'), currentInvoke.event.requestContext.stage].join('/');
-  await tilioClient.calls.create({
-    twiml: twiml.toString(),
-    from: process.env.TWILIO_US_PHONE_NUMBER,
-    to: "+818055146460",
-//    statusCallback: currentBaseUrl + '/webhooks/twilio/call_handler',
-//    statusCallbackMethod: 'POST',
-  }),
+  await twilioCreateCall({
+    twimlString: twiml.toString(),
+    toPhoneNumber: '+818055146460',
+    //    statusCallbackUrl = currentBaseUrl + '/webhooks/twilio/call_handler',
+  });
   res.json({ hello: 'world' });
 });
 
