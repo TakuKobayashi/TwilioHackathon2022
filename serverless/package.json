@@ -1,5 +1,5 @@
 {
-  "name": "serverless-twilio-hackathon-2022",
+  "name": "twilio-hackathon-2022",
   "version": "1.0.0",
   "description": "Serverless aws-nodejs-typescript template",
   "main": "serverless.ts",
