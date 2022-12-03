@@ -11,7 +11,7 @@ app.get('/test', (req, res) => {
   res.json({ hello: 'world' });
 });
 
-app.get('/twilio_call_test', (req, res) => {
+app.get('/twilio_call_test', async (req, res) => {
   const twiml = new VoiceResponse();
   twiml.say(
     {
@@ -21,7 +21,7 @@ app.get('/twilio_call_test', (req, res) => {
     'オッス!!オラゴクウ!!',
   );
   //const currentBaseUrl = ['https://' + res.hostname, request.awsLambda.event.requestContext.stage].join('/');
-  tilioClient.calls.create({
+  await tilioClient.calls.create({
     twiml: twiml.toString(),
     from: process.env.TWILIO_US_PHONE_NUMBER,
     to: "+818055146460",
