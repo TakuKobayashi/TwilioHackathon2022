@@ -4,7 +4,7 @@ import { config } from 'dotenv';
 const configedEnv = config();
 
 const serverlessConfiguration: AWS = {
-  service: 'serverless-twilio-hackathon-2022',
+  service: 'twilio-hackathon-2022',
   frameworkVersion: '3',
   plugins: ['serverless-esbuild', 'serverless-offline', 'serverless-dotenv-plugin'],
   provider: {
