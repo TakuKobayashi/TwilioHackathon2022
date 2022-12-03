@@ -31,7 +31,7 @@ app.get('/twilio_call_test', async (req, res) => {
   await twilioCreateCall({
     twimlString: twiml.toString(),
     toPhoneNumber: '+818055146460',
-    //    statusCallbackUrl = currentBaseUrl + '/webhooks/twilio/call_handler',
+    statusCallbackUrl: currentBaseUrl + '/webhooks/twilio/call_handler',
   });
   res.json({ hello: 'world' });
 });
