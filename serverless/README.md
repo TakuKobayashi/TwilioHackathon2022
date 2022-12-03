@@ -40,3 +40,7 @@ AWS Lambdaに反映されたものの確認方法は以下の通りのURLにて�
 とりあえず、以下のURLにアクセスすると何か表示されます
 
 https://s5bicmgli7.execute-api.ap-northeast-1.amazonaws.com/production/test
+
+## 環境変数
+
+`.env.sample` に記載されているような、`TWILIO_ACCOUNT_SID` や `TWILIO_AUTH_TOKEN`のように該当する内容を`.env` ファイルの中に値を記述するようにしてください。
