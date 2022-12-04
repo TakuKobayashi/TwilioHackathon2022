@@ -35,7 +35,6 @@ lineNotifyRouter.get('/callback', async (req: Request, res: Response) => {
   const currentBaseUrl = [req.protocol + '://' + req.get('host'), currentInvoke.event.requestContext.stage].join('/');
   if (!req.query.code) {
     res.redirect(currentBaseUrl);
-    return {};
   }
   const lineOauthParams = {
     grant_type: 'authorization_code',
@@ -46,16 +45,13 @@ lineNotifyRouter.get('/callback', async (req: Request, res: Response) => {
   };
   const result = await axios
     .post<LineNotifyOauthTokenResponse>(stringifyUrl({ url: LINE_NOTIFY_AUTH_BASE_URL + '/oauth/token', query: lineOauthParams }))
-    .catch((err) => {
-      console.log(err);
-    });
+    .catch((err) => console.log(err));
   if (!result) {
     res.redirect(currentBaseUrl);
-    return {};
   }
   // resultはこんな感じ
   // {"status":200,"message":"access_token is issued","access_token":"..."}
-  return result.data;
+  res.json(result.data);
 });
 lineNotifyRouter.get('/notify', async (req: Request, res: Response) => {
   await sendNotify({ accessToken: req.query.access_token.toString(), message: 'testtest' });
