@@ -1,6 +1,8 @@
 import { NextFunction, Request, Response } from 'express';
 const { getCurrentInvoke } = require('@vendia/serverless-express');
 import bodyParser from 'body-parser';
+import { getUserIds, trimUserIds } from 'src/commons/slack';
+import { addRecords } from 'src/commons/kintone';
 
 const express = require('express');
 const slackWebhookRouter = express.Router();
@@ -106,19 +108,64 @@ slackWebhookRouter.post('/recieved_event', async (req: Request, res: Response, n
   // challengeが行われたときのresponse
   if(webhookBody.type == 'url_verification'){
     console.log("url verifacation");
-    // res.json({challenge: webhookBody.challenge});
+    res.json({challenge: webhookBody.challenge});
   // 何かしらのイベント二体するcallback
   }else if(webhookBody.type == 'event_callback'){
+    const event = webhookBody.event;
+
     // チャンネルにテキストが投稿された時の処理
-    if(webhookBody.event.type == "message"){
+    if(event.type == "message"){
+      console.log('message was posted!');
+      const text = event.text;
 
+      const userIds = await getUserIds(text);
+      console.log('userIds');
+      console.log(userIds);
+
+      // メンションされていた場合、kintoneにそのデータを追加
+      if(userIds) {
+        console.log('mentioned!');
+
+        const newRecords = [];
+        const addDate = new Date();
+        userIds.map(userId => {
+          newRecords[newRecords.length] = {
+            "src_user_id": {
+              "value": event.user
+            },
+            "post_date": {
+              "value": addDate
+            },
+            "dst_user_id": {
+              "value": userId
+            },
+            "text": {
+              "value": trimUserIds(text)
+            },
+            "call": {
+              "value": ["true"]
+            },
+            "timestamp": {
+              "value": event.ts
+            },
+          };
+        });
+
+        addRecords({
+          records: newRecords
+        });
+      }
+
+      res.json({ status: 'OK' });
     // リアクションが行われた時の処理
-    }else if(webhookBody.event.type == "reaction_added"){
-
+    }else if(event.type == "reaction_added"){
+      console.log('reaction was added!');
+      console.log(event);
+      res.json({ status: 'OK' });
     }
   }
-  console.log(webhookBody)
-  res.json({challenge: webhookBody.challenge});
+  // console.log(webhookBody)
+  // res.json({challenge: webhookBody.challenge});
 });
 
 export { slackWebhookRouter };
