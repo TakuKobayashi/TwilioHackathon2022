@@ -57,18 +57,18 @@ const client = new KintoneRestAPIClient({
 // })
 
 // レコードの複数追加
-export function addRecords(params) {
+export async function addRecords(params) {
   const { records } = params;
-  return client.record.addRecords({
+  return await client.record.addRecords({
     app: Number(process.env.KINTONE_APP_ID),
     records: records
   });
 }
 
 // レコードの検索
-export function searchRecords(params) {
+export async function searchRecords(params) {
   const { fields, query } = params;
-  return client.record.getRecords({
+  return await client.record.getRecords({
     app: Number(process.env.KINTONE_APP_ID),
     fields: fields,
     query: query,
@@ -77,9 +77,9 @@ export function searchRecords(params) {
 }
 
 // レコードの更新
-export function updateRecord(params) {
+export async function updateRecord(params) {
   const { id, record } = params;
-  return client.record.updateRecord({
+  return await client.record.updateRecord({
     app: Number(process.env.KINTONE_APP_ID),
     id: id,
     record: record

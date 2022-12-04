@@ -2,7 +2,7 @@ import { NextFunction, Request, Response } from 'express';
 const { getCurrentInvoke } = require('@vendia/serverless-express');
 import bodyParser from 'body-parser';
 import { getUserIds, trimUserIds } from 'src/commons/slack';
-import { addRecords } from 'src/commons/kintone';
+import { addRecords, searchRecords } from 'src/commons/kintone';
 
 const express = require('express');
 const slackWebhookRouter = express.Router();
@@ -151,7 +151,7 @@ slackWebhookRouter.post('/recieved_event', async (req: Request, res: Response, n
           };
         });
 
-        addRecords({
+        await addRecords({
           records: newRecords
         });
       }
@@ -161,6 +161,28 @@ slackWebhookRouter.post('/recieved_event', async (req: Request, res: Response, n
     }else if(event.type == "reaction_added"){
       console.log('reaction was added!');
       console.log(event);
+
+      const src_user_id = event.item_user;
+      const dst_user_id = event.user;
+      const timestamp = event.item.ts;
+
+      const query = 'src_user_id = "' + src_user_id + '" and dst_user_id = "' + dst_user_id + '" and timestamp = "' + timestamp + '"';
+      const searchRecordsResponse = await searchRecords({
+        query: query,
+        fields: ['id']
+      });
+      console.log('searchRecordsResponse');
+      console.log(searchRecordsResponse);
+
+      if(!searchRecordsResponse) {
+        console.log('レスポンスが返って来ていません');
+      }else if(searchRecordsResponse.totalCount === 1) {
+        // 該当のレコードが1つのみ存在すれば、そのレコードのcallのステータスをfalseに更新する
+
+      }else if(searchRecordsResponse.totalCount >= 2) {
+        console.log('該当のレコードが複数存在します');
+      }
+
       res.json({ status: 'OK' });
     }
   }

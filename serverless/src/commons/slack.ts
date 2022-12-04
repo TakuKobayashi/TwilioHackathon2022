@@ -12,9 +12,9 @@ export function getUserId(mentionsUserId) {
 
 export async function getUserIds(text) {
   const mentionsUserIds = await getMentionsUserIds(text);
-  const userIds = mentionsUserIds.map(mentionsUserId => {
+  const userIds = mentionsUserIds ? mentionsUserIds.map(mentionsUserId => {
     return getUserId(mentionsUserId);
-  });
+  }) : null;
   return userIds;
 }
 
