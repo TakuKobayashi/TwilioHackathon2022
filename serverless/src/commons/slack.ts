@@ -11,6 +11,7 @@ export function getUserId(mentionsUserId) {
 }
 
 export async function getUserIds(text) {
+  if(!text) return null;
   const mentionsUserIds = await getMentionsUserIds(text);
   const userIds = mentionsUserIds ? mentionsUserIds.map(mentionsUserId => {
     return getUserId(mentionsUserId);

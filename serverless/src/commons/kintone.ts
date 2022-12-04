@@ -85,3 +85,9 @@ export async function updateRecord(params) {
     record: record
   });
 }
+
+// booleanへの変換（チェックボックス）
+// kintoneではboolean型の変数がないので、チェックボックスのチェックが入っていればtrue, そうでなければfalseとする
+export function convertCheckbox2Boolean(checkboxValue: Array<String>): boolean {
+  return checkboxValue.length !== 0;
+}

@@ -2,7 +2,7 @@ import { NextFunction, Request, Response } from 'express';
 const { getCurrentInvoke } = require('@vendia/serverless-express');
 import bodyParser from 'body-parser';
 import { getUserIds, trimUserIds } from 'src/commons/slack';
-import { addRecords, searchRecords } from 'src/commons/kintone';
+import { addRecords, searchRecords, updateRecord } from 'src/commons/kintone';
 
 const express = require('express');
 const slackWebhookRouter = express.Router();
@@ -153,6 +153,10 @@ slackWebhookRouter.post('/recieved_event', async (req: Request, res: Response, n
 
         await addRecords({
           records: newRecords
+        }).then(result => {
+          console.log('add records success');
+        }).catch(err => {
+          console.log(err);
         });
       }
 
@@ -176,13 +180,29 @@ slackWebhookRouter.post('/recieved_event', async (req: Request, res: Response, n
 
       if(!searchRecordsResponse) {
         console.log('レスポンスが返って来ていません');
-      }else if(searchRecordsResponse.totalCount === 1) {
-        // 該当のレコードが1つのみ存在すれば、そのレコードのcallのステータスをfalseに更新する
-
-      }else if(searchRecordsResponse.totalCount >= 2) {
-        console.log('該当のレコードが複数存在します');
+      }else {
+        const totalCount = Number(searchRecordsResponse.totalCount);
+        if(totalCount === 1) {
+          // 該当のレコードが1つのみ存在すれば、そのレコードのcallのステータスをfalseに更新する
+          const recordId = searchRecordsResponse.records[0].id.value;
+          console.log('recordId');
+          console.log(recordId);
+          await updateRecord({
+            id: recordId,
+            record: {
+              "call": {
+                "value": []
+              },
+            }
+          }).then(result => {
+            console.log('update record success');
+          }).catch(err => {
+            console.log(err);
+          });
+        }else if(totalCount >= 2) {
+          console.log('該当のレコードが複数存在します');
+        }
       }
-
       res.json({ status: 'OK' });
     }
   }
