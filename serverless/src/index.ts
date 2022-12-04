@@ -3,6 +3,7 @@ import express from 'express';
 import twilio from 'twilio';
 import { twilioCreateCall } from './commons/twilio';
 import { getCurrentInvoke } from '@vendia/serverless-express';
+import { lineNotifyRouter } from './routes/platforms/line/notify';
 import { slackWebhookRouter } from './routes/webhooks/slack';
 import { twilioWebhookRouter } from './routes/webhooks/twilio';
 
@@ -10,6 +11,7 @@ const VoiceResponse = twilio.twiml.VoiceResponse;
 
 const app = express();
 
+app.use('/platforms/line/notify', lineNotifyRouter);
 app.use('/webhooks/slack', slackWebhookRouter);
 app.use('/webhooks/twilio', twilioWebhookRouter);
 
