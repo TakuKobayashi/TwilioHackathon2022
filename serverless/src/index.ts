@@ -1,7 +1,7 @@
 import serverlessExpress from '@vendia/serverless-express';
 import express from 'express';
 import twilio from 'twilio';
-import { twilioCreateCall } from './commons/twilio';
+import { twilioCreateCall, twilioSendSMS } from './commons/twilio';
 import { getCurrentInvoke } from '@vendia/serverless-express';
 import { lineNotifyRouter } from './routes/platforms/line/notify';
 import { slackWebhookRouter } from './routes/webhooks/slack';
@@ -35,6 +35,11 @@ app.get('/twilio_call_test', async (req, res) => {
     toPhoneNumber: '+818055146460',
     statusCallbackUrl: currentBaseUrl + '/webhooks/twilio/call_handler',
   });
+  res.json({ hello: 'world' });
+});
+
+app.get('/twilio_sms_test', async (req, res) => {
+  await twilioSendSMS({ message: 'オッス!!オラゴクウ!!', toPhoneNumber: '+818055146460' });
   res.json({ hello: 'world' });
 });
 

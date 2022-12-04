@@ -26,3 +26,11 @@ export async function twilioCreateCall({
     return tilioClient.calls.create(createCallObj);
   }
 }
+
+export async function twilioSendSMS({ message, toPhoneNumber }: { message: string; toPhoneNumber: string }): Promise<any> {
+  return tilioClient.messages.create({
+    body: message,
+    from: process.env.TWILIO_US_PHONE_NUMBER,
+    to: toPhoneNumber,
+  });
+}
