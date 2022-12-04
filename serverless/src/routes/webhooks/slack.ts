@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
 const { getCurrentInvoke } = require('@vendia/serverless-express');
 import bodyParser from 'body-parser';
-import { getUserIds, trimUserIds } from 'src/commons/slack';
+import { getUserIds, trimUserIds, trimPrefixWord } from 'src/commons/slack';
 import { addRecords, searchRecords, updateRecord } from 'src/commons/kintone';
 
 const express = require('express');
@@ -113,8 +113,8 @@ slackWebhookRouter.post('/recieved_event', async (req: Request, res: Response, n
   }else if(webhookBody.type == 'event_callback'){
     const event = webhookBody.event;
 
-    // チャンネルにテキストが投稿された時の処理
-    if(event.type == "message"){
+    // チャンネルに"!gentlecall"から始まるテキストが投稿された時の処理
+    if(event.type == "message" && event.text.startsWith('!gentlecall')){
       console.log('message was posted!');
       const text = event.text;
 
@@ -137,7 +137,7 @@ slackWebhookRouter.post('/recieved_event', async (req: Request, res: Response, n
               "value": userId
             },
             "text": {
-              "value": trimUserIds(text)
+              "value": trimPrefixWord(trimUserIds(text))
             },
             "timestamp": {
               "value": event.ts

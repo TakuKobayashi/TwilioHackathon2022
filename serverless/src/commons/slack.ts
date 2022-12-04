@@ -23,3 +23,8 @@ export function trimUserIds(text) {
   const regIdPattern = /<@[A-Z0-9]{11}>/g;
   return text.replace(regIdPattern, '');
 }
+
+export function trimPrefixWord(text) {
+  const regIdPattern = /!gentlecall/g;
+  return text.replace(regIdPattern, '');
+}
