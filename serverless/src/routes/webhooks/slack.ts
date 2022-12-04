@@ -1,6 +1,8 @@
 import { NextFunction, Request, Response } from 'express';
 const { getCurrentInvoke } = require('@vendia/serverless-express');
 import bodyParser from 'body-parser';
+import { getUserIds, trimUserIds } from 'src/commons/slack';
+import { addRecords, searchRecords, updateRecord } from 'src/commons/kintone';
 
 const express = require('express');
 const slackWebhookRouter = express.Router();
@@ -105,20 +107,108 @@ slackWebhookRouter.post('/recieved_event', async (req: Request, res: Response, n
   const webhookBody = JSON.parse(req.body);
   // challengeが行われたときのresponse
   if(webhookBody.type == 'url_verification'){
-    console.log("url verifacation")
-    // res.json({challenge: webhookBody.challenge});
+    console.log("url verifacation");
+    res.json({challenge: webhookBody.challenge});
   // 何かしらのイベント二体するcallback
   }else if(webhookBody.type == 'event_callback'){
+    const event = webhookBody.event;
+
     // チャンネルにテキストが投稿された時の処理
-    if(webhookBody.event.type == "message"){
+    if(event.type == "message"){
+      console.log('message was posted!');
+      const text = event.text;
 
+      const userIds = await getUserIds(text);
+      console.log('userIds');
+      console.log(userIds);
+
+      // メンションされていた場合、kintoneにそのデータを追加
+      if(userIds) {
+        console.log('mentioned!');
+        console.log(event);
+
+        const newRecords = [];
+        userIds.map(userId => {
+          newRecords[newRecords.length] = {
+            "src_user_id": {
+              "value": event.user
+            },
+            "dst_user_id": {
+              "value": userId
+            },
+            "text": {
+              "value": trimUserIds(text)
+            },
+            "timestamp": {
+              "value": event.ts
+            },
+            "status": {
+              "value": ["true"]
+            },
+            "channel": {
+              "value": event.channel
+            }
+          };
+        });
+
+        await addRecords({
+          records: newRecords
+        }).then(result => {
+          console.log('add records success');
+        }).catch(err => {
+          console.log(err);
+        });
+      }
+
+      res.json({ status: 'OK' });
     // リアクションが行われた時の処理
-    }else if(webhookBody.event.type == "reaction_added"){
+    }else if(event.type == "reaction_added"){
+      console.log('reaction was added!');
+      console.log(event);
 
+      const src_user_id = event.item_user;
+      const dst_user_id = event.user;
+      const timestamp = event.item.ts;
+      const channel = event.item.channel;
+
+      const query = 'src_user_id = "' + src_user_id + '" and dst_user_id = "' + dst_user_id + '" and timestamp = "' + timestamp + '" and channel = "' + channel + '"';
+      const searchRecordsResponse = await searchRecords({
+        query: query,
+        fields: ['id']
+      });
+      console.log('searchRecordsResponse');
+      console.log(searchRecordsResponse);
+
+      if(!searchRecordsResponse) {
+        console.log('レスポンスが返って来ていません');
+      }else {
+        const totalCount = Number(searchRecordsResponse.totalCount);
+        if(totalCount === 1) {
+          // 該当のレコードが1つのみ存在すれば、そのレコードのcallのステータスをfalseに更新する
+          const recordId = searchRecordsResponse.records[0].id.value;
+          console.log('recordId');
+          console.log(recordId);
+          await updateRecord({
+            id: recordId,
+            record: {
+              "status": {
+                "value": []
+              },
+            }
+          }).then(result => {
+            console.log('update record success');
+          }).catch(err => {
+            console.log(err);
+          });
+        }else if(totalCount >= 2) {
+          console.log('該当のレコードが複数存在します');
+        }
+      }
+      res.json({ status: 'OK' });
     }
   }
-  console.log(webhookBody)
-  res.json({challenge: webhookBody.challenge});
+  // console.log(webhookBody)
+  // res.json({challenge: webhookBody.challenge});
 });
 
 export { slackWebhookRouter };
