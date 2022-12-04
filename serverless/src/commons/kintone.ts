@@ -17,28 +17,22 @@ const client = new KintoneRestAPIClient({
 //       "src_user_id": {
 //         "value": "U04DDFRLWG6"
 //       },
-//       "post_date": {
-//         "value": new Date()
-//       },
 //       "dst_user_id": {
 //         "value": "U04DL8Z2G1Y"
 //       },
 //       "text": {
 //         "value": "SDKのお試しです"
 //       },
-//       "call": {
-//         "value": ["true"]
-//       },
 //       "timestamp": {
 //         "value": "0000000000"
+//       },
+//       "status": {
+//         "value": ["true"]
 //       },
 //     },
 //     {
 //       "src_user_id": {
 //         "value": "U0000000000"
-//       },
-//       "post_date": {
-//         "value": new Date()
 //       },
 //       "dst_user_id": {
 //         "value": "U1111111111"
@@ -46,11 +40,11 @@ const client = new KintoneRestAPIClient({
 //       "text": {
 //         "value": "SDKのお試し2です"
 //       },
-//       "call": {
-//         "value": ["true"]
-//       },
 //       "timestamp": {
 //         "value": "2222222222"
+//       },
+//       "status": {
+//         "value": ["true"]
 //       },
 //     },
 //   ]

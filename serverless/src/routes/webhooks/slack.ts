@@ -127,14 +127,10 @@ slackWebhookRouter.post('/recieved_event', async (req: Request, res: Response, n
         console.log('mentioned!');
 
         const newRecords = [];
-        const addDate = new Date();
         userIds.map(userId => {
           newRecords[newRecords.length] = {
             "src_user_id": {
               "value": event.user
-            },
-            "post_date": {
-              "value": addDate
             },
             "dst_user_id": {
               "value": userId
@@ -142,11 +138,11 @@ slackWebhookRouter.post('/recieved_event', async (req: Request, res: Response, n
             "text": {
               "value": trimUserIds(text)
             },
-            "call": {
-              "value": ["true"]
-            },
             "timestamp": {
               "value": event.ts
+            },
+            "status": {
+              "value": ["true"]
             },
           };
         });
@@ -190,7 +186,7 @@ slackWebhookRouter.post('/recieved_event', async (req: Request, res: Response, n
           await updateRecord({
             id: recordId,
             record: {
-              "call": {
+              "status": {
                 "value": []
               },
             }
