@@ -125,6 +125,7 @@ slackWebhookRouter.post('/recieved_event', async (req: Request, res: Response, n
       // メンションされていた場合、kintoneにそのデータを追加
       if(userIds) {
         console.log('mentioned!');
+        console.log(event);
 
         const newRecords = [];
         userIds.map(userId => {
@@ -144,6 +145,9 @@ slackWebhookRouter.post('/recieved_event', async (req: Request, res: Response, n
             "status": {
               "value": ["true"]
             },
+            "channel": {
+              "value": event.channel
+            }
           };
         });
 
@@ -165,8 +169,9 @@ slackWebhookRouter.post('/recieved_event', async (req: Request, res: Response, n
       const src_user_id = event.item_user;
       const dst_user_id = event.user;
       const timestamp = event.item.ts;
+      const channel = event.item.channel;
 
-      const query = 'src_user_id = "' + src_user_id + '" and dst_user_id = "' + dst_user_id + '" and timestamp = "' + timestamp + '"';
+      const query = 'src_user_id = "' + src_user_id + '" and dst_user_id = "' + dst_user_id + '" and timestamp = "' + timestamp + '" and channel = "' + channel + '"';
       const searchRecordsResponse = await searchRecords({
         query: query,
         fields: ['id']

@@ -29,6 +29,9 @@ const client = new KintoneRestAPIClient({
 //       "status": {
 //         "value": ["true"]
 //       },
+//       "channel": {
+//         "value": "C000000000"
+//       }
 //     },
 //     {
 //       "src_user_id": {
@@ -46,9 +49,12 @@ const client = new KintoneRestAPIClient({
 //       "status": {
 //         "value": ["true"]
 //       },
-//     },
+//       "channel": {
+//         "value": "C000000000"
+//       }
+//     }
 //   ]
-// })
+// });
 
 // レコードの複数追加
 export async function addRecords(params) {
