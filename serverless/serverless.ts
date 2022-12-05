@@ -3,7 +3,7 @@ import type { AWS } from '@serverless/typescript';
 import { config } from 'dotenv';
 const configedEnv = config();
 
-const queueName = 'GentleCallReminderQueue'
+const queueName = 'GentleCallReminderQueue';
 
 const serverlessConfiguration: AWS = {
   service: 'twilio-hackathon-2022',
@@ -22,6 +22,7 @@ const serverlessConfiguration: AWS = {
     environment: {
       AWS_NODEJS_CONNECTION_REUSE_ENABLED: '1',
       NODE_OPTIONS: '--enable-source-maps --stack-trace-limit=1000',
+      QUEUE_URL: 'https://sqs.${aws:region}.amazonaws.com/${aws:accountId}/' + queueName,
     },
   },
   resources: {

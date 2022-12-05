@@ -7,6 +7,8 @@ import { lineNotifyRouter } from './routes/platforms/line/notify';
 import { slackWebhookRouter } from './routes/webhooks/slack';
 import { twilioWebhookRouter } from './routes/webhooks/twilio';
 
+import { sendSQSMessage } from './commons/aws-sqs';
+
 const VoiceResponse = twilio.twiml.VoiceResponse;
 
 const app = express();
@@ -17,6 +19,11 @@ app.use('/webhooks/twilio', twilioWebhookRouter);
 
 app.get('/test', (req, res) => {
   res.json({ hello: 'world' });
+});
+
+app.get('/send_sqs_test', async (req, res) => {
+  const data = await sendSQSMessage({ delaySeconds: 20, messageBodyObject: { hello: 'world' } });
+  res.json(data);
 });
 
 app.get('/twilio_call_test', async (req, res) => {
