@@ -3,6 +3,8 @@ import type { AWS } from '@serverless/typescript';
 import { config } from 'dotenv';
 const configedEnv = config();
 
+const queueName = 'GentleCallReminderQueue'
+
 const serverlessConfiguration: AWS = {
   service: 'twilio-hackathon-2022',
   frameworkVersion: '3',
@@ -22,6 +24,16 @@ const serverlessConfiguration: AWS = {
       NODE_OPTIONS: '--enable-source-maps --stack-trace-limit=1000',
     },
   },
+  resources: {
+    Resources: {
+      ReminderQueue: {
+        Type: 'AWS::SQS::Queue',
+        Properties: {
+          QueueName: queueName,
+        },
+      },
+    },
+  },
   // import the function via paths
   functions: {
     app: {
@@ -39,6 +51,17 @@ const serverlessConfiguration: AWS = {
             method: 'ANY',
             path: '/{any+}',
             cors: true,
+          },
+        },
+      ],
+    },
+    queueevent: {
+      handler: 'src/sqs.handler',
+      events: [
+        {
+          sqs: {
+            arn: 'arn:aws:sqs:${aws:region}:${aws:accountId}:' + queueName,
+            //batchSize: 10000, // max 10000, FIFO queuesの場合はmax 10.
           },
         },
       ],
