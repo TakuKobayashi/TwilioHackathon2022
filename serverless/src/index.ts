@@ -28,15 +28,23 @@ app.get('/send_sqs_test', async (req, res) => {
 
 app.get('/twilio_call_test', async (req, res) => {
   const twiml = new VoiceResponse();
+  const currentInvoke = getCurrentInvoke();
+  const currentBaseUrl = [req.protocol + '://' + req.get('host'), currentInvoke.event.requestContext.stage].join('/');
+  // 番号をプッシュした時の受け取り先を指定
+  twiml.gather({
+    // 番号を押した時の受け取り先
+    action: currentBaseUrl + '/webhooks/twilio/gather',
+    input: 'dtmf', // dtmf がいわゆる電話機の番号入植という意味 speech にしたら話している内容を文字に起こして入力される
+    finishOnKey: '', // 入力終了のKey defaultは'#' 文字を空を指定したら全ての記号が乳力終了になる
+    method: 'POST',
+  });
   twiml.say(
     {
       language: 'ja-JP',
       voice: 'woman',
     },
-    'オッス!!オラゴクウ!!',
+    'メッセージに反応をしてください!! 1を押したら電話をかけます 2を押したら要件の内容をメッセージに残してお伝えします',
   );
-  const currentInvoke = getCurrentInvoke();
-  const currentBaseUrl = [req.protocol + '://' + req.get('host'), currentInvoke.event.requestContext.stage].join('/');
   await twilioCreateCall({
     twimlString: twiml.toString(),
     toPhoneNumber: '+818055146460',
