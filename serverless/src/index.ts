@@ -1,15 +1,12 @@
 import serverlessExpress from '@vendia/serverless-express';
 import express from 'express';
-import twilio from 'twilio';
-import { twilioCreateCall, twilioSendSMS } from './commons/twilio';
+import { twilioCreateCall, twilioSendSMS, gatherTwiml } from './commons/twilio';
 import { getCurrentInvoke } from '@vendia/serverless-express';
 import { lineNotifyRouter } from './routes/platforms/line/notify';
 import { slackWebhookRouter } from './routes/webhooks/slack';
 import { twilioWebhookRouter } from './routes/webhooks/twilio';
 
 import { sendSQSMessage } from './commons/aws-sqs';
-
-const VoiceResponse = twilio.twiml.VoiceResponse;
 
 const app = express();
 
@@ -27,28 +24,11 @@ app.get('/send_sqs_test', async (req, res) => {
 });
 
 app.get('/twilio_call_test', async (req, res) => {
-  const twiml = new VoiceResponse();
   const currentInvoke = getCurrentInvoke();
   const currentBaseUrl = [req.protocol + '://' + req.get('host'), currentInvoke.event.requestContext.stage].join('/');
-  // 番号をプッシュした時の受け取り先を指定
-  const gather = twiml.gather({
-    // 番号を押した時の受け取り先
-    action: currentBaseUrl + '/webhooks/twilio/gather_dtmf_handler',
-    input: 'dtmf', // dtmf がいわゆる電話機の番号入植という意味 speech にしたら話している内容を文字に起こして入力される
-    finishOnKey: '#', // 入力終了のKey defaultは'#' 文字を空を指定したら全ての記号が乳力終了になる
-    method: 'POST',
-    timeout: 30, // 入力をうけつけてくれる秒数
-    numDigit: 1, // 相手からプッシュ操作を1桁待つ
-  });
-  gather.say(
-    {
-      language: 'ja-JP',
-      voice: 'woman',
-    },
-    'メッセージに反応をしてください!! 1を押したら電話をかけます 2を押したら要件の内容をメッセージに残してお伝えします',
-  );
+  const twimlString = gatherTwiml(currentBaseUrl + '/webhooks/twilio/gather_dtmf_handler');
   await twilioCreateCall({
-    twimlString: twiml.toString(),
+    twimlString: twimlString,
     toPhoneNumber: '+818055146460',
     statusCallbackUrl: currentBaseUrl + '/webhooks/twilio/call_handler',
   });

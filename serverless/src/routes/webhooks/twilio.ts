@@ -2,6 +2,7 @@ import { NextFunction, Request, Response } from 'express';
 import bodyParser from 'body-parser';
 import { parse } from 'query-string';
 import twilio from 'twilio';
+import { recordTwiml } from '../../commons/twilio';
 import { getCurrentInvoke } from '@vendia/serverless-express';
 
 const VoiceResponse = twilio.twiml.VoiceResponse;
@@ -94,6 +95,7 @@ twilioWebhookRouter.post('/gather_dtmf_handler', async (req, res) => {
   }
   */
   console.log(payload);
+  let responseString = '';
   const twiml = new VoiceResponse();
   if (payload.Digits) {
     // 1が押された時の処理
@@ -107,26 +109,14 @@ twilioWebhookRouter.post('/gather_dtmf_handler', async (req, res) => {
         },
         payload.Digits + 'が押されました',
       );
-    // 2が押された時の処理
+      responseString = twiml.toString();
+      // 2が押された時の処理
     } else if (payload.Digits === '2') {
       const currentInvoke = getCurrentInvoke();
       const currentBaseUrl = [req.protocol + '://' + req.get('host'), currentInvoke.event.requestContext.stage].join('/');
-      const timeoutSecond = 30;
-      // 録音するより前に言わせるにはrecordより前にsayの処理を書くようにする必要がある
-      twiml.say(
-        {
-          language: 'ja-JP',
-          voice: 'woman',
-        },
-        'ピーとなったら' + timeoutSecond.toString() + '秒で要件をお話しください',
-      );
-      twiml.record({
-        timeout: timeoutSecond,
-        playBeep: true,
-        transcribe: true,
-        recordingStatusCallbackMethod: 'POST',
-        recordingStatusCallback: currentBaseUrl + '/webhooks/twilio/recording_status_handler',
-        transcribeCallback: currentBaseUrl + '/webhooks/twilio/transcribe_handler',
+      responseString = recordTwiml({
+        recordingStatusCallbackUrl: currentBaseUrl + '/webhooks/twilio/recording_status_handler',
+        transcribeCallbackUrl: currentBaseUrl + '/webhooks/twilio/transcribe_handler',
       });
     }
   } else {
@@ -138,11 +128,12 @@ twilioWebhookRouter.post('/gather_dtmf_handler', async (req, res) => {
       },
       'エラーが発生しました',
     );
+    responseString = twiml.toString();
   }
 
   // Render the response as XML in reply to the webhook request
   res.type('text/xml');
-  res.send(twiml.toString());
+  res.send(responseString);
 });
 
 // 録音した結果の受け取り口(transcribeよりも先の呼ばれる)
