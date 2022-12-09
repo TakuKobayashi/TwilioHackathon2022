@@ -2,6 +2,7 @@ import { NextFunction, Request, Response } from 'express';
 import bodyParser from 'body-parser';
 import { parse } from 'query-string';
 import twilio from 'twilio';
+import { getCurrentInvoke } from '@vendia/serverless-express';
 
 const VoiceResponse = twilio.twiml.VoiceResponse;
 
@@ -57,7 +58,7 @@ twilioWebhookRouter.post('/call_handler', async (req, res) => {
   res.send('ok');
 });
 
-twilioWebhookRouter.post('/gather', async (req, res) => {
+twilioWebhookRouter.post('/gather_dtmf_handler', async (req, res) => {
   const payload = parse(req.body);
   // payloadには以下のようなデータが送られてくる
   /*
@@ -99,16 +100,35 @@ twilioWebhookRouter.post('/gather', async (req, res) => {
     if (payload.Digits === '1') {
       // dialで電話を転送する
       //twiml.dial(phoneNumber)
+      twiml.say(
+        {
+          language: 'ja-JP',
+          voice: 'woman',
+        },
+        payload.Digits + 'が押されました',
+      );
     // 2が押された時の処理
     } else if (payload.Digits === '2') {
+      const currentInvoke = getCurrentInvoke();
+      const currentBaseUrl = [req.protocol + '://' + req.get('host'), currentInvoke.event.requestContext.stage].join('/');
+      const timeoutSecond = 30;
+      // 録音するより前に言わせるにはrecordより前にsayの処理を書くようにする必要がある
+      twiml.say(
+        {
+          language: 'ja-JP',
+          voice: 'woman',
+        },
+        'ピーとなったら' + timeoutSecond.toString() + '秒で要件をお話しください',
+      );
+      twiml.record({
+        timeout: timeoutSecond,
+        playBeep: true,
+        transcribe: true,
+        recordingStatusCallbackMethod: 'POST',
+        recordingStatusCallback: currentBaseUrl + '/webhooks/twilio/recording_status_handler',
+        transcribeCallback: currentBaseUrl + '/webhooks/twilio/transcribe_handler',
+      });
     }
-    twiml.say(
-      {
-        language: 'ja-JP',
-        voice: 'woman',
-      },
-      payload.Digits + 'が押されました',
-    );
   } else {
     // TODO 無限ループにさせた方がよさそう
     twiml.say(
@@ -123,6 +143,55 @@ twilioWebhookRouter.post('/gather', async (req, res) => {
   // Render the response as XML in reply to the webhook request
   res.type('text/xml');
   res.send(twiml.toString());
+});
+
+// 録音した結果の受け取り口(transcribeよりも先の呼ばれる)
+twilioWebhookRouter.post('/recording_status_handler', async (req, res) => {
+  const payload = parse(req.body);
+  // payloadには以下のようなデータが送られてくる
+  /*
+  {
+    AccountSid: 'AccountSid',
+    CallSid: 'CallSid',
+    ErrorCode: '0',
+    RecordingChannels: '1',
+    RecordingDuration: '3',
+    RecordingSid: 'RecordingSid',
+    RecordingSource: 'RecordVerb',
+    RecordingStartTime: 'Fri, 09 Dec 2022 11:37:35 +0000',
+    RecordingStatus: 'completed', // completed は録音が完了して音声ファイルが作成されたということ
+    RecordingUrl: '録音した音声ファイルの格納先のURL'
+  }
+  */
+  console.log(payload);
+  res.send('ok');
+});
+
+twilioWebhookRouter.post('/transcribe_handler', async (req, res) => {
+  const payload = parse(req.body);
+  console.log(payload);
+  /*
+  {
+    AccountSid: 'AccountSid',
+    ApiVersion: '2010-04-01',
+    CallSid: 'CallSid',
+    CallStatus: 'completed',
+    Called: '電話を受けた方の電話番号',
+    Caller: '電話をかけた方の電話番号',
+    Direction: 'outbound-api',
+    From: '電話をかけた方の電話番号',
+    RecordingSid: 'REcad03fc7815572ac54bfd0572bc8d3dc',
+    RecordingUrl: '録音した音声ファイルの格納先のURL',
+    To: '電話を受けた方の電話番号',
+    TranscriptionSid: 'TranscriptionSid',
+    TranscriptionStatus: 'completed', // 文字起こし完了
+    TranscriptionText: 'Most most, most most.', // 「もしもし」と言ったが英語のみ文字に起こされたので
+    TranscriptionType: 'fast',
+    TranscriptionUrl: '文字に起こしたデータの格納先URL',
+    url: 'このwebhookの情報を送ったURL'
+  }
+  */
+  res.send('ok');
 });
 
 export { twilioWebhookRouter };

@@ -31,14 +31,16 @@ app.get('/twilio_call_test', async (req, res) => {
   const currentInvoke = getCurrentInvoke();
   const currentBaseUrl = [req.protocol + '://' + req.get('host'), currentInvoke.event.requestContext.stage].join('/');
   // 番号をプッシュした時の受け取り先を指定
-  twiml.gather({
+  const gather = twiml.gather({
     // 番号を押した時の受け取り先
-    action: currentBaseUrl + '/webhooks/twilio/gather',
+    action: currentBaseUrl + '/webhooks/twilio/gather_dtmf_handler',
     input: 'dtmf', // dtmf がいわゆる電話機の番号入植という意味 speech にしたら話している内容を文字に起こして入力される
-    finishOnKey: '', // 入力終了のKey defaultは'#' 文字を空を指定したら全ての記号が乳力終了になる
+    finishOnKey: '#', // 入力終了のKey defaultは'#' 文字を空を指定したら全ての記号が乳力終了になる
     method: 'POST',
+    timeout: 30, // 入力をうけつけてくれる秒数
+    numDigit: 1, // 相手からプッシュ操作を1桁待つ
   });
-  twiml.say(
+  gather.say(
     {
       language: 'ja-JP',
       voice: 'woman',
