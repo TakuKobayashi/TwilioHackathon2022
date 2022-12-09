@@ -4,6 +4,7 @@ import { config } from 'dotenv';
 const configedEnv = config();
 
 const queueName = 'GentleCallReminderQueue';
+const bucketName = 'gentle-call-record';
 
 const serverlessConfiguration: AWS = {
   service: 'twilio-hackathon-2022',
@@ -31,6 +32,12 @@ const serverlessConfiguration: AWS = {
         Type: 'AWS::SQS::Queue',
         Properties: {
           QueueName: queueName,
+        },
+      },
+      RecordBucket: {
+        Type: 'AWS::S3::Bucket',
+        Properties: {
+          BucketName: bucketName,
         },
       },
     },
