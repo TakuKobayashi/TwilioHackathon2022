@@ -2,7 +2,7 @@ import { NextFunction, Request, Response } from 'express';
 const { getCurrentInvoke } = require('@vendia/serverless-express');
 import bodyParser from 'body-parser';
 import { getUserIds, trimUserIds, trimPrefixWord } from 'src/commons/slack';
-import { addRecords, searchRecords, updateRecord } from 'src/commons/kintone';
+import { addRecords, searchRecords, updateRecord, getUserDisplayName } from 'src/commons/kintone';
 
 const express = require('express');
 const slackWebhookRouter = express.Router();
@@ -126,15 +126,26 @@ slackWebhookRouter.post('/recieved_event', async (req: Request, res: Response, n
       if(userIds) {
         console.log('mentioned!');
         console.log(event);
+        const srcUserDisplayName = await getUserDisplayName(event.user);
+        console.log('srcUserDisplayName');
+        console.log(srcUserDisplayName);
 
-        const newRecords = [];
-        userIds.map(userId => {
-          newRecords[newRecords.length] = {
+        await Promise.all(userIds.map(async userId => {
+          const dstUserDisplayName = await getUserDisplayName(userId);
+          console.log('dstUserDisplayName');
+          console.log(dstUserDisplayName);
+          return {
             "src_user_id": {
               "value": event.user
             },
+            "src_user_display_name": {
+              "value": srcUserDisplayName
+            },
             "dst_user_id": {
               "value": userId
+            },
+            "dst_user_display_name": {
+              "value": dstUserDisplayName
             },
             "text": {
               "value": trimPrefixWord(trimUserIds(text))
@@ -149,14 +160,16 @@ slackWebhookRouter.post('/recieved_event', async (req: Request, res: Response, n
               "value": event.channel
             }
           };
-        });
-
-        await addRecords({
-          records: newRecords
-        }).then(result => {
-          console.log('add records success');
-        }).catch(err => {
-          console.log(err);
+        })).then((newRecords) => {
+          console.log('newRecords');
+          console.log(newRecords);
+          addRecords({
+            records: newRecords
+          }).then(() => {
+            console.log('add records success');
+          }).catch(err => {
+            console.log(err);
+          });
         });
       }
 

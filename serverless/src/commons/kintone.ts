@@ -4,10 +4,17 @@ require('dotenv').config();
 const { KintoneRestAPIClient } = require("@kintone/rest-api-client");
 
 // クライアントの作成
-const client = new KintoneRestAPIClient({
+const messagesClient = new KintoneRestAPIClient({
   baseUrl: process.env.KINTONE_BASE_URL,
   auth: {
-    apiToken: process.env.KINTONE_API_TOKEN
+    apiToken: process.env.KINTONE_MESSAGES_API_TOKEN
+  },
+});
+
+const usersClient = new KintoneRestAPIClient({
+  baseUrl: process.env.KINTONE_BASE_URL,
+  auth: {
+    apiToken: process.env.KINTONE_USERS_API_TOKEN
   },
 });
 
@@ -59,8 +66,8 @@ const client = new KintoneRestAPIClient({
 // レコードの複数追加
 export async function addRecords(params) {
   const { records } = params;
-  return await client.record.addRecords({
-    app: Number(process.env.KINTONE_APP_ID),
+  return await messagesClient.record.addRecords({
+    app: Number(process.env.KINTONE_MESSAGES_APP_ID),
     records: records
   });
 }
@@ -68,8 +75,19 @@ export async function addRecords(params) {
 // レコードの検索
 export async function searchRecords(params) {
   const { fields, query } = params;
-  return await client.record.getRecords({
-    app: Number(process.env.KINTONE_APP_ID),
+  return await messagesClient.record.getRecords({
+    app: Number(process.env.KINTONE_MESSAGES_APP_ID),
+    fields: fields,
+    query: query,
+    totalCount: true
+  });
+}
+
+// レコードの検索
+export async function searchUsersRecords(params) {
+  const { fields, query } = params;
+  return await usersClient.record.getRecords({
+    app: Number(process.env.KINTONE_USERS_APP_ID),
     fields: fields,
     query: query,
     totalCount: true
@@ -79,8 +97,8 @@ export async function searchRecords(params) {
 // レコードの更新
 export async function updateRecord(params) {
   const { id, record } = params;
-  return await client.record.updateRecord({
-    app: Number(process.env.KINTONE_APP_ID),
+  return await messagesClient.record.updateRecord({
+    app: Number(process.env.KINTONE_MESSAGES_APP_ID),
     id: id,
     record: record
   });
@@ -91,3 +109,25 @@ export async function updateRecord(params) {
 export function convertCheckbox2Boolean(checkboxValue: Array<String>): boolean {
   return checkboxValue.length !== 0;
 }
+
+export async function getUserDisplayName(user_id) {
+  const query = 'user_id = "' + user_id + '"';
+  const response = await searchUsersRecords({
+    query: query,
+    fields: ['display_name']
+  });
+
+  if(!response) {
+    console.log('レスポンスが返って来ていません');
+    return '';
+  }else {
+    const totalCount = Number(response.totalCount);
+    if(totalCount === 1) {
+      return response.records[0].display_name.value;
+    }else if(totalCount >= 2) {
+      console.log('該当のレコードが複数存在します');
+      return '';
+    }
+    return '';
+  }
+};
