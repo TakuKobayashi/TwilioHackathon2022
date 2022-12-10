@@ -25,18 +25,22 @@ jobs:
         TWILIO_ACCOUNT_SID: ${{ secrets.TWILIO_ACCOUNT_SID }}
         TWILIO_AUTH_TOKEN: ${{ secrets.TWILIO_AUTH_TOKEN }}
         TWILIO_US_PHONE_NUMBER: ${{ secrets.TWILIO_US_PHONE_NUMBER }}
-        KINTONE_API_TOKEN: ${{ secrets.KINTONE_API_TOKEN }}
         KINTONE_BASE_URL: ${{ secrets.KINTONE_BASE_URL }}
-        KINTONE_APP_ID: ${{ secrets.KINTONE_APP_ID }}
+        KINTONE_MESSAGES_APP_ID: ${{ secrets.KINTONE_MESSAGES_APP_ID }}
+        KINTONE_MESSAGES_API_TOKEN: ${{ secrets.KINTONE_MESSAGES_API_TOKEN }}
+        KINTONE_USERS_APP_ID: ${{ secrets.KINTONE_USERS_APP_ID }}
+        KINTONE_USERS_API_TOKEN: ${{ secrets.KINTONE_USERS_API_TOKEN }}
         LINE_NOTIFY_CLIENT_ID: ${{ secrets.LINE_NOTIFY_CLIENT_ID }}
         LINE_NOTIFY_CLIENT_SECRET: ${{ secrets.LINE_NOTIFY_CLIENT_SECRET }}
       run: |
         echo "TWILIO_ACCOUNT_SID=${TWILIO_ACCOUNT_SID}" >> ./.env
         echo "TWILIO_AUTH_TOKEN=${TWILIO_AUTH_TOKEN}" >> ./.env
         echo "TWILIO_US_PHONE_NUMBER=${TWILIO_US_PHONE_NUMBER}" >> ./.env
-        echo "KINTONE_API_TOKEN=${KINTONE_API_TOKEN}" >> ./.env
         echo "KINTONE_BASE_URL=${KINTONE_BASE_URL}" >> ./.env
-        echo "KINTONE_APP_ID=${KINTONE_APP_ID}" >> ./.env
+        echo "KINTONE_MESSAGES_APP_ID=${KINTONE_MESSAGES_APP_ID}" >> ./.env
+        echo "KINTONE_MESSAGES_API_TOKEN=${KINTONE_MESSAGES_API_TOKEN}" >> ./.env
+        echo "KINTONE_USERS_APP_ID=${KINTONE_USERS_APP_ID}" >> ./.env
+        echo "KINTONE_USERS_API_TOKEN=${KINTONE_USERS_API_TOKEN}" >> ./.env
         echo "LINE_NOTIFY_CLIENT_ID=${LINE_NOTIFY_CLIENT_ID}" >> ./.env
         echo "LINE_NOTIFY_CLIENT_SECRET=${LINE_NOTIFY_CLIENT_SECRET}" >> ./.env
     - name: yarn install
