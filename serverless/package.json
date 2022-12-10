@@ -33,7 +33,8 @@
     "serverless": "^3.25.1",
     "serverless-dotenv-plugin": "^4.0.2",
     "serverless-esbuild": "^1.33.2",
-    "serverless-offline": "^11.6.0",
+    "serverless-offline": "^12.0.1",
+    "serverless-offline-sqs": "^7.3.1",
     "ts-node": "^10.9.1",
     "tsconfig-paths": "^4.1.0",
     "typescript": "^4.8.4"

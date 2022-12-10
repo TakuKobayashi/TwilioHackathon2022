@@ -3,17 +3,28 @@ import type { AWS } from '@serverless/typescript';
 import { config } from 'dotenv';
 const configedEnv = config();
 
+const regionName = 'ap-northeast-1';
 const queueName = 'GentleCallReminderQueue';
 const bucketName = 'gentle-call-record';
+const localAccountId = 'local-accountid';
+
+const execCommand = JSON.parse(process.env.npm_config_argv || JSON.stringify({}));
+const isLocal: boolean = execCommand.original && execCommand.original.includes('offline') && execCommand.original.includes('start');
+const queueUrl = isLocal
+  ? 'https://sqs.' + regionName + '.amazonaws.com/' + localAccountId + '/' + queueName
+  : 'https://sqs.${aws:region}.amazonaws.com/${aws:accountId}/' + queueName;
+const arnName = isLocal
+  ? 'arn:aws:sqs:' + regionName + ':' + localAccountId + ':' + queueName
+  : 'arn:aws:sqs:${aws:region}:${aws:accountId}:' + queueName;
 
 const serverlessConfiguration: AWS = {
   service: 'twilio-hackathon-2022',
   frameworkVersion: '3',
-  plugins: ['serverless-esbuild', 'serverless-offline', 'serverless-dotenv-plugin'],
+  plugins: ['serverless-esbuild', 'serverless-offline', 'serverless-dotenv-plugin', 'serverless-offline-sqs'],
   provider: {
     name: 'aws',
     runtime: 'nodejs16.x',
-    region: 'ap-northeast-1',
+    region: regionName,
     timeout: 900,
     memorySize: 256,
     apiGateway: {
@@ -23,7 +34,7 @@ const serverlessConfiguration: AWS = {
     environment: {
       AWS_NODEJS_CONNECTION_REUSE_ENABLED: '1',
       NODE_OPTIONS: '--enable-source-maps --stack-trace-limit=1000',
-      QUEUE_URL: 'https://sqs.${aws:region}.amazonaws.com/${aws:accountId}/' + queueName,
+      QUEUE_URL: queueUrl,
     },
   },
   resources: {
@@ -68,7 +79,7 @@ const serverlessConfiguration: AWS = {
       events: [
         {
           sqs: {
-            arn: 'arn:aws:sqs:${aws:region}:${aws:accountId}:' + queueName,
+            arn: arnName,
             //batchSize: 10000, // max 10000, FIFO queuesの場合はmax 10.
           },
         },
