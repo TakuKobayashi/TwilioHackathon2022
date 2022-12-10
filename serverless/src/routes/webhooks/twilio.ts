@@ -2,7 +2,7 @@ import { NextFunction, Request, Response } from 'express';
 import bodyParser from 'body-parser';
 import { parse } from 'query-string';
 import twilio from 'twilio';
-import { recordTwiml } from '../../commons/twilio';
+import { recordTwiml, dialTwiml } from '../../commons/twilio';
 import { getCurrentInvoke } from '@vendia/serverless-express';
 
 const VoiceResponse = twilio.twiml.VoiceResponse;
@@ -96,24 +96,19 @@ twilioWebhookRouter.post('/gather_dtmf_handler', async (req, res) => {
   */
   console.log(payload);
   let responseString = '';
+  const currentInvoke = getCurrentInvoke();
+  const currentBaseUrl = [req.protocol + '://' + req.get('host'), currentInvoke.event.requestContext.stage].join('/');
   const twiml = new VoiceResponse();
   if (payload.Digits) {
     // 1が押された時の処理
     if (payload.Digits === '1') {
-      // dialで電話を転送する
-      //twiml.dial(phoneNumber)
-      twiml.say(
-        {
-          language: 'ja-JP',
-          voice: 'woman',
-        },
-        payload.Digits + 'が押されました',
-      );
-      responseString = twiml.toString();
+      responseString = dialTwiml({
+        toPhoneNumber: '転送したい転送先の電話番号',
+        dialCallbackUrl: currentBaseUrl + '/webhooks/twilio/redirect_dial_handler',
+        referUrl: currentBaseUrl + '/webhooks/twilio/dial_refer_handler',
+      });
       // 2が押された時の処理
     } else if (payload.Digits === '2') {
-      const currentInvoke = getCurrentInvoke();
-      const currentBaseUrl = [req.protocol + '://' + req.get('host'), currentInvoke.event.requestContext.stage].join('/');
       responseString = recordTwiml({
         recordingStatusCallbackUrl: currentBaseUrl + '/webhooks/twilio/recording_status_handler',
         transcribeCallbackUrl: currentBaseUrl + '/webhooks/twilio/transcribe_handler',
@@ -134,6 +129,46 @@ twilioWebhookRouter.post('/gather_dtmf_handler', async (req, res) => {
   // Render the response as XML in reply to the webhook request
   res.type('text/xml');
   res.send(responseString);
+});
+
+// 電話転送する時に呼ばれるメソッド
+twilioWebhookRouter.post('/redirect_dial_handler', async (req, res) => {
+  const payload = parse(req.body);
+  // payloadには以下のようなデータが送られてくる
+  /*
+  {
+    AccountSid: 'AccountSid',
+    ApiVersion: '2010-04-01',
+    CallSid: 'CallSid',
+    CallStatus: 'completed', // completed は電話を切った時に呼ばれるという状態を表している
+    Called: '電話を転送しようと発信した側の電話番号',
+    CalledCity: '',
+    CalledCountry: 'JP',
+    CalledState: '',
+    CalledZip: '',
+    Caller: '電話を転送したTwilio側の電話番号',
+    CallerCity: 'FILLMORE',
+    CallerCountry: 'US',
+    CallerState: 'CA',
+    CallerZip: '93065',
+    DialCallDuration: '12',
+    DialCallSid: 'DialCallSid',
+    DialCallStatus: 'completed',
+    Direction: 'outbound-api',
+    From: '電話を転送したTwilio側の電話番号',
+    FromCity: 'FILLMORE',
+    FromCountry: 'US',
+    FromState: 'CA',
+    FromZip: '93065',
+    To: '電話を転送しようと発信した側の電話番号',
+    ToCity: '',
+    ToCountry: 'JP',
+    ToState: '',
+    ToZip: ''
+  }
+  */
+  console.log(payload);
+  res.send('ok');
 });
 
 // 録音した結果の受け取り口(transcribeよりも先の呼ばれる)

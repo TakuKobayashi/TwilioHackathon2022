@@ -58,6 +58,36 @@ export function gatherTwiml(actionUrl: string): string {
   return twiml.toString();
 }
 
+export function dialTwiml({
+  toPhoneNumber,
+  dialCallbackUrl,
+//  referUrl,
+}: {
+  toPhoneNumber: string;
+  dialCallbackUrl: string;
+//  referUrl: string;
+}): string {
+  const twiml = new VoiceResponse();
+  // dialで電話を転送する
+  twiml.say(
+    {
+      language: 'ja-JP',
+      voice: 'woman',
+    },
+    '電話をかけます',
+  );
+  twiml.dial(
+    {
+      action: dialCallbackUrl,
+      method: 'POST',
+//      referUrl: referUrl,
+//      referMethod: 'POST',
+    },
+    toPhoneNumber,
+  );
+  return twiml.toString();
+}
+
 export function recordTwiml({
   recordingStatusCallbackUrl,
   transcribeCallbackUrl,
