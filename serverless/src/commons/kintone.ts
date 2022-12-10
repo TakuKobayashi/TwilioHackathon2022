@@ -110,11 +110,11 @@ export function convertCheckbox2Boolean(checkboxValue: Array<String>): boolean {
   return checkboxValue.length !== 0;
 }
 
-export async function getUserDisplayName(user_id) {
+export async function getUserInfo(user_id) {
   const query = 'user_id = "' + user_id + '"';
   const response = await searchUsersRecords({
     query: query,
-    fields: ['display_name']
+    fields: ['display_name', 'phone_number']
   });
 
   if(!response) {
@@ -123,7 +123,7 @@ export async function getUserDisplayName(user_id) {
   }else {
     const totalCount = Number(response.totalCount);
     if(totalCount === 1) {
-      return response.records[0].display_name.value;
+      return [response.records[0].display_name.value, response.records[0].phone_number.value];
     }else if(totalCount >= 2) {
       console.log('該当のレコードが複数存在します');
       return '';
