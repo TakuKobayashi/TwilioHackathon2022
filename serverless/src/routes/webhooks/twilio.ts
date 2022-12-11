@@ -130,7 +130,6 @@ twilioWebhookRouter.post('/gather_dtmf_handler', async (req, res) => {
       responseString = dialTwiml({
         toPhoneNumber: '転送したい転送先の電話番号',
         dialCallbackUrl: currentBaseUrl + '/webhooks/twilio/redirect_dial_handler',
-        // referUrl: currentBaseUrl + '/webhooks/twilio/dial_refer_handler',
       });
       // 2が押された時の処理
     } else if (payload.Digits === '2') {

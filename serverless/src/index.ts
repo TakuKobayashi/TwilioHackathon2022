@@ -1,11 +1,14 @@
 import serverlessExpress from '@vendia/serverless-express';
 import express from 'express';
 import bodyParser from 'body-parser';
+import axios from 'axios';
 import { twilioCreateCall, twilioSendSMS, gatherTwiml } from './commons/twilio';
 import { getCurrentInvoke } from '@vendia/serverless-express';
 import { lineNotifyRouter } from './routes/platforms/line/notify';
 import { slackWebhookRouter } from './routes/webhooks/slack';
 import { twilioWebhookRouter } from './routes/webhooks/twilio';
+import { S3Client } from "@aws-sdk/client-s3";
+import { Upload } from '@aws-sdk/lib-storage'
 
 import { sendSQSMessage, sendMockSQSMessage } from './commons/aws-sqs';
 import { getCurrentBaseUrl } from './commons/util';
@@ -141,6 +144,35 @@ app.get('/twilio_sms_test', async (req, res) => {
 app.post('/send_twilio_sms', async (req, res) => {
   await twilioSendSMS({ message: req.body.message, toPhoneNumber: req.body.toPhoneNumber });
   res.json({ status: 'OK' });
+});
+
+app.get('/file_upload_test', async (req, res) => {
+  console.log("start download")
+  // Download from Twilio
+  const downloadResponse = await axios.get(
+    `https://api.twilio.com/2010-04-01/Accounts/ACde9bc01a6d19d0bf03c1ee8a0fd4aff5/Recordings/REb310acd0f58713f9745fa28abc2c7097.wav`,
+    {
+      responseType: 'stream',
+      auth: {
+        username: process.env.TWILIO_ACCOUNT_SID,
+        password: process.env.TWILIO_AUTH_TOKEN,
+      },
+    },
+  );
+  const s3Client = new S3Client({ region: process.env.AWS_REGION });
+  const upload = new Upload({
+    client: s3Client,
+    params: {
+      Bucket: process.env.S3_BUCKERT_NAME,
+      Key: `recordedFile/ACde9bc01a6d19d0bf03c1ee8a0fd4aff5.wav`,
+      Body: downloadResponse.data,
+    },
+  })
+  upload.on('httpUploadProgress', (progress) => {
+    console.log(progress)
+  })
+  await upload.done()
+  res.json({ hello: 'world' });
 });
 
 // When serverless offline start, access below
