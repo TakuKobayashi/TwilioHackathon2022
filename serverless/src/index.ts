@@ -138,6 +138,11 @@ app.get('/twilio_sms_test', async (req, res) => {
   res.json({ hello: 'world' });
 });
 
+app.post('/send_twilio_sms', async (req, res) => {
+  await twilioSendSMS({ message: req.body.message, toPhoneNumber: req.body.toPhoneNumber });
+  res.json({ status: 'OK' });
+});
+
 // When serverless offline start, access below
 // http://localhost:3000/dev/
 // add generate new AWS Lambda functions[api]

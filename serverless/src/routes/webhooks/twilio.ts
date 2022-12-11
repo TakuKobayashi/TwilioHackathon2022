@@ -2,8 +2,10 @@ import { NextFunction, Request, Response } from 'express';
 import bodyParser from 'body-parser';
 import { parse } from 'query-string';
 import twilio from 'twilio';
+import axios from 'axios';
 import { recordTwiml, dialTwiml } from '../../commons/twilio';
 import { getCurrentInvoke } from '@vendia/serverless-express';
+import { getCurrentBaseUrl } from 'src/commons/util';
 
 const VoiceResponse = twilio.twiml.VoiceResponse;
 
@@ -20,7 +22,8 @@ twilioWebhookRouter.get('/', async (req: Request, res: Response, next: NextFunct
 twilioWebhookRouter.post('/call_handler', async (req, res) => {
   console.log('/call_handler');
   console.log(req.body);
-  const payload = parse(req.body);
+  const payload = req.body;
+  // const payload = parse(req.body);
   // payloadには以下のようなデータが送られてくる
   /*
   {
@@ -58,6 +61,7 @@ twilioWebhookRouter.post('/call_handler', async (req, res) => {
   }
   */
   console.log(payload);
+  const currentBaseUrl = getCurrentBaseUrl(req);
 
   const callStatus = payload.CallStatus;
   console.log('callStatus: ' + callStatus);
@@ -68,6 +72,11 @@ twilioWebhookRouter.post('/call_handler', async (req, res) => {
       break;
     case 'busy':
       // 電話を受け取らなかった場合、SMSに通知を送る
+      const sendData = {
+        message: 'GentleCallからの不在着信です。緊急の連絡があります。詳しくはSlackを確認してください。',
+        toPhoneNumber: payload.To,
+      };
+      await axios.post(currentBaseUrl + '/send_twilio_sms', sendData);
       break;
     default:
       console.log(callStatus);
