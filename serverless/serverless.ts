@@ -96,6 +96,8 @@ const serverlessConfiguration: AWS = {
           s3: {
             bucket: bucketName,
             event: 's3:ObjectCreated:*',
+            existing: true,
+            forceDeploy: true,
             rules: [
               {
                 prefix: transcribeResultPrefixKey,
