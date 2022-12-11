@@ -7,6 +7,8 @@ const regionName = 'ap-northeast-1';
 const queueName = 'GentleCallReminderQueue';
 const bucketName = 'gentle-call-record';
 const localAccountId = 'local-accountid';
+// 文字起こし結果を保存するJSONディレクトリの場所
+const transcribeResultPrefixKey = 'TranscribeResult/';
 
 const execCommand = JSON.parse(process.env.npm_config_argv || JSON.stringify({}));
 const isLocal: boolean = execCommand.original && execCommand.original.includes('offline') && execCommand.original.includes('start');
@@ -36,6 +38,7 @@ const serverlessConfiguration: AWS = {
       NODE_OPTIONS: '--enable-source-maps --stack-trace-limit=1000',
       QUEUE_URL: queueUrl,
       S3_BUCKERT_NAME: bucketName,
+      TRANSCRIBE_RESULT_PREFIX_KEY: transcribeResultPrefixKey,
     },
   },
   resources: {
@@ -82,6 +85,23 @@ const serverlessConfiguration: AWS = {
           sqs: {
             arn: arnName,
             //batchSize: 10000, // max 10000, FIFO queuesの場合はmax 10.
+          },
+        },
+      ],
+    },
+    s3event: {
+      handler: 'src/s3-create-event.handler',
+      events: [
+        {
+          s3: {
+            bucket: bucketName,
+            event: 's3:ObjectCreated:*',
+            rules: [
+              {
+                prefix: transcribeResultPrefixKey,
+                suffix: '.json',
+              },
+            ],
           },
         },
       ],

@@ -1,6 +1,7 @@
 import serverlessExpress from '@vendia/serverless-express';
 import express from 'express';
 import bodyParser from 'body-parser';
+import path from 'path';
 import {
   twilioCreateCall,
   twilioSendSMS,
@@ -158,7 +159,7 @@ app.get('/file_upload_test', async (req, res) => {
   const data = await transcribeRecordFile({
     jobName: `ACde9bc01a6d19d0bf03c1ee8a0fd4aff5`,
     inputKey: 'RecordingFiles/ACde9bc01a6d19d0bf03c1ee8a0fd4aff5.wav',
-    outputKey: `ACde9bc01a6d19d0bf03c1ee8a0fd4aff5.json`,
+    outputKey: path.join(process.env.TRANSCRIBE_RESULT_PREFIX_KEY, `ACde9bc01a6d19d0bf03c1ee8a0fd4aff5.json`),
   });
   console.log(data);
   res.json({ hello: 'world' });

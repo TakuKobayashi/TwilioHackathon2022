@@ -3,6 +3,7 @@ import bodyParser from 'body-parser';
 import { parse } from 'query-string';
 import twilio from 'twilio';
 import axios from 'axios';
+import path from 'path';
 import {
   recordTwiml,
   dialTwiml,
@@ -228,7 +229,7 @@ twilioWebhookRouter.post('/recording_status_handler', async (req, res) => {
   await transcribeRecordFile({
     jobName: payload.RecordingSid,
     inputKey: inputKey,
-    outputKey: `${payload.RecordingSid}.json`,
+    outputKey: path.join(process.env.TRANSCRIBE_RESULT_PREFIX_KEY, `${payload.RecordingSid}.json`),
   });
   res.send('ok');
 });
