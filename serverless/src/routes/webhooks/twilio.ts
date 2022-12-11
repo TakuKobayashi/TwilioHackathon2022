@@ -2,8 +2,10 @@ import { NextFunction, Request, Response } from 'express';
 import bodyParser from 'body-parser';
 import { parse } from 'query-string';
 import twilio from 'twilio';
+import axios from 'axios';
 import { recordTwiml, dialTwiml } from '../../commons/twilio';
 import { getCurrentInvoke } from '@vendia/serverless-express';
+import { getCurrentBaseUrl } from 'src/commons/util';
 
 const VoiceResponse = twilio.twiml.VoiceResponse;
 
@@ -18,7 +20,8 @@ twilioWebhookRouter.get('/', async (req: Request, res: Response, next: NextFunct
 });
 
 twilioWebhookRouter.post('/call_handler', async (req, res) => {
-  const payload = parse(req.body);
+  const payload = req.body;
+  // const payload = parse(req.body);
   // payloadには以下のようなデータが送られてくる
   /*
   {
@@ -56,11 +59,33 @@ twilioWebhookRouter.post('/call_handler', async (req, res) => {
   }
   */
   console.log(payload);
+  const currentBaseUrl = getCurrentBaseUrl(req);
+
+  const callStatus = payload.CallStatus;
+  console.log('callStatus: ' + callStatus);
+
+  switch(callStatus) {
+    case 'completed':
+      // 電話を受け取った場合、何もしない
+      break;
+    case 'busy':
+      // 電話を受け取らなかった場合、SMSに通知を送る
+      const sendData = {
+        message: 'GentleCallからの不在着信です。緊急の連絡があります。詳しくはSlackを確認してください。',
+        toPhoneNumber: payload.To,
+      };
+      await axios.post(currentBaseUrl + '/send_twilio_sms', sendData);
+      break;
+    default:
+      console.log(callStatus);
+      break;
+  }
   res.send('ok');
 });
 
 twilioWebhookRouter.post('/gather_dtmf_handler', async (req, res) => {
-  const payload = parse(req.body);
+  const payload = req.body;
+  // const payload = parse(req.body);
   // payloadには以下のようなデータが送られてくる
   /*
   {
@@ -105,7 +130,7 @@ twilioWebhookRouter.post('/gather_dtmf_handler', async (req, res) => {
       responseString = dialTwiml({
         toPhoneNumber: '転送したい転送先の電話番号',
         dialCallbackUrl: currentBaseUrl + '/webhooks/twilio/redirect_dial_handler',
-        referUrl: currentBaseUrl + '/webhooks/twilio/dial_refer_handler',
+        // referUrl: currentBaseUrl + '/webhooks/twilio/dial_refer_handler',
       });
       // 2が押された時の処理
     } else if (payload.Digits === '2') {
@@ -133,7 +158,8 @@ twilioWebhookRouter.post('/gather_dtmf_handler', async (req, res) => {
 
 // 電話転送する時に呼ばれるメソッド
 twilioWebhookRouter.post('/redirect_dial_handler', async (req, res) => {
-  const payload = parse(req.body);
+  const payload = req.body;
+  // const payload = parse(req.body);
   // payloadには以下のようなデータが送られてくる
   /*
   {
@@ -173,7 +199,8 @@ twilioWebhookRouter.post('/redirect_dial_handler', async (req, res) => {
 
 // 録音した結果の受け取り口(transcribeよりも先の呼ばれる)
 twilioWebhookRouter.post('/recording_status_handler', async (req, res) => {
-  const payload = parse(req.body);
+  const payload = req.body;
+  // const payload = parse(req.body);
   // payloadには以下のようなデータが送られてくる
   /*
   {
@@ -194,7 +221,8 @@ twilioWebhookRouter.post('/recording_status_handler', async (req, res) => {
 });
 
 twilioWebhookRouter.post('/transcribe_handler', async (req, res) => {
-  const payload = parse(req.body);
+  const payload = req.body;
+  // const payload = parse(req.body);
   console.log(payload);
   /*
   {
