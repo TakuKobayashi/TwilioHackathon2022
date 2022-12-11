@@ -161,8 +161,7 @@ app.get('/file_upload_test', async (req, res) => {
     inputKey: 'RecordingFiles/ACde9bc01a6d19d0bf03c1ee8a0fd4aff5.wav',
     outputKey: path.join(process.env.TRANSCRIBE_RESULT_PREFIX_KEY, `ACde9bc01a6d19d0bf03c1ee8a0fd4aff5.json`),
   });
-  console.log(data);
-  res.json({ hello: 'world' });
+  res.json(data);
 });
 
 // When serverless offline start, access below
