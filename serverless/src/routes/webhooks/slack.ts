@@ -1,13 +1,15 @@
 import { NextFunction, Request, Response } from 'express';
 const { getCurrentInvoke } = require('@vendia/serverless-express');
+import axios, { AxiosResponse } from 'axios';
 import bodyParser from 'body-parser';
 import { getUserIds, trimUserIds, trimPrefixWord } from 'src/commons/slack';
 import { addRecords, searchRecords, updateRecord, getUserInfo } from 'src/commons/kintone';
+import { getCurrentBaseUrl } from 'src/commons/util';
 
 const express = require('express');
 const slackWebhookRouter = express.Router();
-slackWebhookRouter.use(bodyParser.text({ type: "application/json" }));
-slackWebhookRouter.use(bodyParser.urlencoded({ extended: false }));
+// slackWebhookRouter.use(bodyParser.text({ type: "application/json" }));
+// slackWebhookRouter.use(bodyParser.urlencoded({ extended: false }));
 
 slackWebhookRouter.get('/', async (req: Request, res: Response, next: NextFunction) => {
   res.json({ message: 'hello slack webhook' });
@@ -104,7 +106,7 @@ slackWebhookRouter.post('/recieved_event', async (req: Request, res: Response, n
   //  "is_ext_shared_channel":false,
   //  "event_context":"..."
   //}
-  const webhookBody = JSON.parse(req.body);
+  const webhookBody = req.body;
   // challengeが行われたときのresponse
   if(webhookBody.type == 'url_verification'){
     console.log("url verifacation");
@@ -171,8 +173,23 @@ slackWebhookRouter.post('/recieved_event', async (req: Request, res: Response, n
           console.log(newRecords);
           addRecords({
             records: newRecords
-          }).then(() => {
+          }).then(async () => {
             console.log('add records success');
+
+            // Twilioによる発信（今は仮でメッセージが来たら即発信）
+            const currentBaseUrl = getCurrentBaseUrl(req);
+
+            await Promise.all(newRecords.map(async newRecord => {
+              const sendData = {
+                toPhoneNumber: newRecord.dst_user_phone_number.value,
+              };
+              const response = await axios.post(currentBaseUrl + '/notify_immediately', sendData);
+              return response;
+            })).then(result => {
+              console.log(result);
+            }).catch(e => {
+              console.log(e);
+            });
           }).catch(err => {
             console.log(err);
           });
