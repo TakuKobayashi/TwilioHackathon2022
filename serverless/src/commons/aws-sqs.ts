@@ -30,6 +30,8 @@ export async function sendMockSQSMessage({
   // handler内の処理
   const sendData = {
     toPhoneNumber: messageBodyObject.toPhoneNumber,
+    src_user_display_name: messageBodyObject.src_user_display_name,
+    text: messageBodyObject.text,
   };
   const response = await axios.post(currentBaseUrl + '/create_twilio_call', sendData);
   const data = response.data;

@@ -36,7 +36,7 @@ export async function twilioSendSMS({ message, toPhoneNumber }: { message: strin
   });
 }
 
-export function gatherTwiml(actionUrl: string): string {
+export function gatherTwiml(actionUrl: string, src_user_display_name?: string, text?: string): string {
   const twiml = new VoiceResponse();
   // 番号をプッシュした時の受け取り先を指定
   const gather = twiml.gather({
@@ -48,12 +48,16 @@ export function gatherTwiml(actionUrl: string): string {
     timeout: 30, // 入力をうけつけてくれる秒数
     numDigit: 1, // 相手からプッシュ操作を1桁待つ
   });
+  const messageHead = src_user_display_name && text
+    ? `${src_user_display_name}さんから緊急のメッセージが来ています！メッセージに反応してください！メッセージ内容は「${text}」です。`
+    : 'メッセージに反応してください！';
+  const message = messageHead + '1を押したら電話をかけます。2を押したら要件の内容をメッセージに残してお伝えします。最後に「#」キーを押してください。';
   gather.say(
     {
       language: 'ja-JP',
       voice: 'woman',
     },
-    'メッセージに反応をしてください!! 1を押したら電話をかけます 2を押したら要件の内容をメッセージに残してお伝えします',
+    message
   );
   return twiml.toString();
 }

@@ -39,6 +39,8 @@ app.post('/notify_immediately', async (req, res) => {
     delaySeconds: 20,
     messageBodyObject: {
       toPhoneNumber: req.body.toPhoneNumber,
+      src_user_display_name: req.body.src_user_display_name,
+      text: req.body.text,
       currentBaseUrl: currentBaseUrl
     }
   });
@@ -62,7 +64,14 @@ app.get('/twilio_call_test', async (req, res) => {
 app.post('/create_twilio_call', async (req, res) => {
   const currentBaseUrl = getCurrentBaseUrl(req);
 
-  const twimlString = gatherTwiml(currentBaseUrl + '/webhooks/twilio/gather_dtmf_handler');
+  const src_user_display_name = req.body.src_user_display_name;
+  const text = req.body.text;
+
+  const twimlString = gatherTwiml(
+    currentBaseUrl + '/webhooks/twilio/gather_dtmf_handler',
+    src_user_display_name,
+    text
+  );
   await twilioCreateCall({
     twimlString: twimlString,
     toPhoneNumber: req.body.toPhoneNumber,
