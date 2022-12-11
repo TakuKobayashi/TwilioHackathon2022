@@ -7,6 +7,9 @@ import {
   StartTranscriptionJobCommand,
   StartTranscriptionJobCommandInput,
   StartTranscriptionJobCommandOutput,
+  DeleteTranscriptionJobCommand,
+  DeleteTranscriptionJobCommandInput,
+  DeleteTranscriptionJobCommandOutput,
 } from '@aws-sdk/client-transcribe';
 
 const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
@@ -183,5 +186,14 @@ export async function transcribeRecordFile({
     OutputKey: outputKey,
   };
   const command = new StartTranscriptionJobCommand(params);
+  return transcribeClient.send(command);
+}
+
+export async function deleteTranscribeJob({ jobName }: { jobName: string }): Promise<DeleteTranscriptionJobCommandOutput> {
+  const transcribeClient = new TranscribeClient({ region: process.env.AWS_REGION });
+  const params: DeleteTranscriptionJobCommandInput = {
+    TranscriptionJobName: jobName,
+  };
+  const command = new DeleteTranscriptionJobCommand(params);
   return transcribeClient.send(command);
 }
