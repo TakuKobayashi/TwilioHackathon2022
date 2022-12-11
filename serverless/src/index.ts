@@ -1,7 +1,14 @@
 import serverlessExpress from '@vendia/serverless-express';
 import express from 'express';
 import bodyParser from 'body-parser';
-import { twilioCreateCall, twilioSendSMS, gatherTwiml, downloadRecordingFileStream, uploadToS3RecordingFileStream } from './commons/twilio';
+import {
+  twilioCreateCall,
+  twilioSendSMS,
+  gatherTwiml,
+  downloadRecordingFileStream,
+  uploadToS3RecordingFileStream,
+  transcribeRecordFile,
+} from './commons/twilio';
 import { getCurrentInvoke } from '@vendia/serverless-express';
 import { lineNotifyRouter } from './routes/platforms/line/notify';
 import { slackWebhookRouter } from './routes/webhooks/slack';
@@ -148,6 +155,12 @@ app.get('/file_upload_test', async (req, res) => {
     `https://api.twilio.com/2010-04-01/Accounts/ACde9bc01a6d19d0bf03c1ee8a0fd4aff5/Recordings/REb310acd0f58713f9745fa28abc2c7097.wav`,
   );
   await uploadToS3RecordingFileStream(`RecordingFiles/ACde9bc01a6d19d0bf03c1ee8a0fd4aff5.wav`, downloadResponse.data);
+  const data = await transcribeRecordFile({
+    jobName: `ACde9bc01a6d19d0bf03c1ee8a0fd4aff5`,
+    inputKey: 'RecordingFiles/ACde9bc01a6d19d0bf03c1ee8a0fd4aff5.wav',
+    outputKey: `ACde9bc01a6d19d0bf03c1ee8a0fd4aff5.json`,
+  });
+  console.log(data);
   res.json({ hello: 'world' });
 });
 

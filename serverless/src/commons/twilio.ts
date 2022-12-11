@@ -2,6 +2,12 @@ import twilio from 'twilio';
 import axios, { AxiosResponse } from 'axios';
 import { S3Client, CompleteMultipartUploadCommandOutput, AbortMultipartUploadCommandOutput } from '@aws-sdk/client-s3';
 import { Upload } from '@aws-sdk/lib-storage';
+import {
+  TranscribeClient,
+  StartTranscriptionJobCommand,
+  StartTranscriptionJobCommandInput,
+  StartTranscriptionJobCommandOutput,
+} from '@aws-sdk/client-transcribe';
 
 const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
 const VoiceResponse = twilio.twiml.VoiceResponse;
@@ -152,4 +158,30 @@ export async function uploadToS3RecordingFileStream(
   })
   */
   return upload.done();
+}
+
+export async function transcribeRecordFile({
+  jobName,
+  inputKey,
+  outputKey,
+  languageCode = 'ja-JP',
+  mediaFormat = 'wav',
+}: {
+  jobName: string;
+  inputKey: string;
+  outputKey: string;
+  languageCode: string;
+  mediaFormat: string;
+}): Promise<StartTranscriptionJobCommandOutput> {
+  const transcribeClient = new TranscribeClient({ region: process.env.AWS_REGION });
+  const params: StartTranscriptionJobCommandInput = {
+    TranscriptionJobName: jobName,
+    LanguageCode: languageCode,
+    MediaFormat: mediaFormat,
+    Media: { MediaFileUri: `s3://${process.env.S3_BUCKERT_NAME}/${inputKey}` },
+    OutputBucketName: process.env.S3_BUCKERT_NAME,
+    OutputKey: outputKey,
+  };
+  const command = new StartTranscriptionJobCommand(params);
+  return transcribeClient.send(command);
 }
