@@ -18,6 +18,8 @@ twilioWebhookRouter.get('/', async (req: Request, res: Response, next: NextFunct
 });
 
 twilioWebhookRouter.post('/call_handler', async (req, res) => {
+  console.log('/call_handler');
+  console.log(req.body);
   const payload = parse(req.body);
   // payloadには以下のようなデータが送られてくる
   /*
@@ -56,10 +58,27 @@ twilioWebhookRouter.post('/call_handler', async (req, res) => {
   }
   */
   console.log(payload);
+
+  const callStatus = payload.CallStatus;
+  console.log('callStatus: ' + callStatus);
+
+  switch(callStatus) {
+    case 'completed':
+      // 電話を受け取った場合、何もしない
+      break;
+    case 'busy':
+      // 電話を受け取らなかった場合、SMSに通知を送る
+      break;
+    default:
+      console.log(callStatus);
+      break;
+  }
   res.send('ok');
 });
 
 twilioWebhookRouter.post('/gather_dtmf_handler', async (req, res) => {
+  console.log('/gather_dtmf_handler');
+  console.log(req.body);
   const payload = parse(req.body);
   // payloadには以下のようなデータが送られてくる
   /*
@@ -105,7 +124,7 @@ twilioWebhookRouter.post('/gather_dtmf_handler', async (req, res) => {
       responseString = dialTwiml({
         toPhoneNumber: '転送したい転送先の電話番号',
         dialCallbackUrl: currentBaseUrl + '/webhooks/twilio/redirect_dial_handler',
-        referUrl: currentBaseUrl + '/webhooks/twilio/dial_refer_handler',
+        // referUrl: currentBaseUrl + '/webhooks/twilio/dial_refer_handler',
       });
       // 2が押された時の処理
     } else if (payload.Digits === '2') {

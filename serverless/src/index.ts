@@ -9,6 +9,7 @@ import { twilioWebhookRouter } from './routes/webhooks/twilio';
 
 import { sendSQSMessage, sendMockSQSMessage } from './commons/aws-sqs';
 import { getCurrentBaseUrl } from './commons/util';
+import { searchRecords, updateRecord } from './commons/kintone';
 
 const app = express();
 
@@ -39,7 +40,11 @@ app.post('/notify_immediately', async (req, res) => {
     delaySeconds: 20,
     messageBodyObject: {
       toPhoneNumber: req.body.toPhoneNumber,
+      src_user_id: req.body.src_user_id,
       src_user_display_name: req.body.src_user_display_name,
+      dst_user_id: req.body.dst_user_id,
+      timestamp: req.body.timestamp,
+      channel: req.body.channel,
       text: req.body.text,
       currentBaseUrl: currentBaseUrl
     }
@@ -64,7 +69,11 @@ app.get('/twilio_call_test', async (req, res) => {
 app.post('/create_twilio_call', async (req, res) => {
   const currentBaseUrl = getCurrentBaseUrl(req);
 
+  const src_user_id = req.body.src_user_id;
   const src_user_display_name = req.body.src_user_display_name;
+  const dst_user_id = req.body.dst_user_id;
+  const timestamp = req.body.timestamp;
+  const channel = req.body.channel;
   const text = req.body.text;
 
   const twimlString = gatherTwiml(
@@ -76,7 +85,43 @@ app.post('/create_twilio_call', async (req, res) => {
     twimlString: twimlString,
     toPhoneNumber: req.body.toPhoneNumber,
     statusCallbackUrl: currentBaseUrl + '/webhooks/twilio/call_handler',
-  }).then(() => {
+  }).then(async () => {
+    // 電話をかけたらkintoneの該当レコードのステータスをfalse(空の配列)にする
+    const query = 'src_user_id = "' + src_user_id + '" and dst_user_id = "' + dst_user_id + '" and timestamp = "' + timestamp + '" and channel = "' + channel + '"';
+    const searchRecordsResponse = await searchRecords({
+      query: query,
+      fields: ['id']
+    });
+
+    console.log('searchRecordsResponse');
+    console.log(searchRecordsResponse);
+
+    if(!searchRecordsResponse) {
+      console.log('レスポンスが返って来ていません');
+    }else {
+      const totalCount = Number(searchRecordsResponse.totalCount);
+      if(totalCount === 1) {
+        // 該当のレコードが1つのみ存在すれば、そのレコードのcallのステータスをfalseに更新する
+        const recordId = searchRecordsResponse.records[0].id.value;
+        console.log('recordId');
+        console.log(recordId);
+        await updateRecord({
+          id: recordId,
+          record: {
+            "status": {
+              "value": []
+            },
+          }
+        }).then(result => {
+          console.log('update record success');
+        }).catch(err => {
+          console.log(err);
+        });
+      }else if(totalCount >= 2) {
+        console.log('該当のレコードが複数存在します');
+      }
+    }
+
     res.json({
       status: 'OK',
       data: {

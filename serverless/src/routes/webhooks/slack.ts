@@ -182,7 +182,11 @@ slackWebhookRouter.post('/recieved_event', async (req: Request, res: Response, n
             await Promise.all(newRecords.map(async newRecord => {
               const sendData = {
                 toPhoneNumber: newRecord.dst_user_phone_number.value,
+                src_user_id: newRecord.src_user_id.value,
                 src_user_display_name: newRecord.src_user_display_name.value,
+                dst_user_id: newRecord.dst_user_id.value,
+                timestamp: newRecord.timestamp.value,
+                channel: newRecord.channel.value,
                 text: newRecord.text.value,
               };
               const response = await axios.post(currentBaseUrl + '/notify_immediately', sendData);
