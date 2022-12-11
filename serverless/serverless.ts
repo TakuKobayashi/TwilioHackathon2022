@@ -33,6 +33,24 @@ const serverlessConfiguration: AWS = {
       minimumCompressionSize: 1024,
       shouldStartNameWithService: true,
     },
+    iam: {
+      role: {
+        statements: [
+          {
+            // S3の指定バケット上のオブジェクトの入出力を許可
+            Effect: 'Allow',
+            Action: ['s3:GetObject', 's3:PutObject'],
+            Resource: [`arn:aws:s3:::${bucketName}/*`],
+          },
+          {
+            // CloudWatchにログ出力を許可
+            Effect: 'Allow',
+            Action: ['logs:CreateLogGroup', 'logs:CreateLogStream', 'logs:PutLogEvents'],
+            Resource: ['*'],
+          },
+        ],
+      },
+    },
     environment: {
       AWS_NODEJS_CONNECTION_REUSE_ENABLED: '1',
       NODE_OPTIONS: '--enable-source-maps --stack-trace-limit=1000',
