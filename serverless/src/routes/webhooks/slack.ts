@@ -141,6 +141,9 @@ slackWebhookRouter.post('/recieved_event', async (req: Request, res: Response, n
             "src_user_display_name": {
               "value": srcUserDisplayName
             },
+            "src_user_phone_number": {
+              "value": srcUserPhoneNumber
+            },
             "dst_user_id": {
               "value": userId
             },
