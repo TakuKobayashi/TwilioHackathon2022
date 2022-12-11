@@ -114,7 +114,7 @@ slackWebhookRouter.post('/recieved_event', async (req: Request, res: Response, n
     const event = webhookBody.event;
 
     // チャンネルに"!gentlecall"から始まるテキストが投稿された時の処理
-    if(event.type == "message" && event.text.startsWith('!gentlecall')){
+    if(event.type == "message" && event.text && event.text.startsWith('!gentlecall')){
       console.log('message was posted!');
       const text = event.text;
 
