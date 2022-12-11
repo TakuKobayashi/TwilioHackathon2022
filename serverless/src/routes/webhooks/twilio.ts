@@ -3,7 +3,7 @@ import bodyParser from 'body-parser';
 import { parse } from 'query-string';
 import twilio from 'twilio';
 import axios from 'axios';
-import { recordTwiml, dialTwiml } from '../../commons/twilio';
+import { recordTwiml, dialTwiml, downloadRecordingFileStream, uploadToS3RecordingFileStream } from '../../commons/twilio';
 import { getCurrentInvoke } from '@vendia/serverless-express';
 import { getCurrentBaseUrl } from 'src/commons/util';
 
@@ -216,6 +216,8 @@ twilioWebhookRouter.post('/recording_status_handler', async (req, res) => {
   }
   */
   console.log(payload);
+  const downloadResponse = await downloadRecordingFileStream(`${payload.RecordingUrl}.wav`);
+  await uploadToS3RecordingFileStream(`RecordingFiles/${payload.RecordingSid}.wav`, downloadResponse.data);
   res.send('ok');
 });
 

@@ -1,4 +1,7 @@
 import twilio from 'twilio';
+import axios, { AxiosResponse } from 'axios';
+import { S3Client, CompleteMultipartUploadCommandOutput, AbortMultipartUploadCommandOutput } from '@aws-sdk/client-s3';
+import { Upload } from '@aws-sdk/lib-storage';
 
 const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
 const VoiceResponse = twilio.twiml.VoiceResponse;
@@ -65,11 +68,11 @@ export function gatherTwiml(actionUrl: string, src_user_display_name?: string, t
 export function dialTwiml({
   toPhoneNumber,
   dialCallbackUrl,
-//  referUrl,
-}: {
+}: //  referUrl,
+{
   toPhoneNumber: string;
   dialCallbackUrl: string;
-//  referUrl: string;
+  //  referUrl: string;
 }): string {
   const twiml = new VoiceResponse();
   // dialで電話を転送する
@@ -84,8 +87,8 @@ export function dialTwiml({
     {
       action: dialCallbackUrl,
       method: 'POST',
-//      referUrl: referUrl,
-//      referMethod: 'POST',
+      //      referUrl: referUrl,
+      //      referMethod: 'POST',
     },
     toPhoneNumber,
   );
@@ -118,4 +121,35 @@ export function recordTwiml({
     transcribeCallback: transcribeCallbackUrl,
   });
   return twiml.toString();
+}
+
+export async function downloadRecordingFileStream(recordingUrl: string): Promise<AxiosResponse<any, any>> {
+  return axios.get(recordingUrl, {
+    responseType: 'stream',
+    auth: {
+      username: process.env.TWILIO_ACCOUNT_SID,
+      password: process.env.TWILIO_AUTH_TOKEN,
+    },
+  });
+}
+
+export async function uploadToS3RecordingFileStream(
+  uploadKey: string,
+  streamData: any,
+): Promise<CompleteMultipartUploadCommandOutput | AbortMultipartUploadCommandOutput> {
+  const s3Client = new S3Client({ region: process.env.AWS_REGION });
+  const upload = new Upload({
+    client: s3Client,
+    params: {
+      Bucket: process.env.S3_BUCKERT_NAME,
+      Key: uploadKey,
+      Body: streamData,
+    },
+  });
+  /*
+  upload.on('httpUploadProgress', (progress) => {
+    console.log(progress)
+  })
+  */
+  return upload.done();
 }
