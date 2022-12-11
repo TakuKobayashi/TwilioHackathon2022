@@ -1,7 +1,15 @@
 import serverlessExpress from '@vendia/serverless-express';
 import express from 'express';
 import bodyParser from 'body-parser';
-import { twilioCreateCall, twilioSendSMS, gatherTwiml } from './commons/twilio';
+import path from 'path';
+import {
+  twilioCreateCall,
+  twilioSendSMS,
+  gatherTwiml,
+  downloadRecordingFileStream,
+  uploadToS3RecordingFileStream,
+  transcribeRecordFile,
+} from './commons/twilio';
 import { getCurrentInvoke } from '@vendia/serverless-express';
 import { lineNotifyRouter } from './routes/platforms/line/notify';
 import { slackWebhookRouter } from './routes/webhooks/slack';
@@ -141,6 +149,19 @@ app.get('/twilio_sms_test', async (req, res) => {
 app.post('/send_twilio_sms', async (req, res) => {
   await twilioSendSMS({ message: req.body.message, toPhoneNumber: req.body.toPhoneNumber });
   res.json({ status: 'OK' });
+});
+
+app.get('/file_upload_test', async (req, res) => {
+  const downloadResponse = await downloadRecordingFileStream(
+    `https://api.twilio.com/2010-04-01/Accounts/ACde9bc01a6d19d0bf03c1ee8a0fd4aff5/Recordings/REb310acd0f58713f9745fa28abc2c7097.wav`,
+  );
+  await uploadToS3RecordingFileStream(`RecordingFiles/ACde9bc01a6d19d0bf03c1ee8a0fd4aff5.wav`, downloadResponse.data);
+  const data = await transcribeRecordFile({
+    jobName: `ACde9bc01a6d19d0bf03c1ee8a0fd4aff5`,
+    inputKey: 'RecordingFiles/ACde9bc01a6d19d0bf03c1ee8a0fd4aff5.wav',
+    outputKey: path.join(process.env.TRANSCRIBE_RESULT_PREFIX_KEY, `ACde9bc01a6d19d0bf03c1ee8a0fd4aff5.json`),
+  });
+  res.json(data);
 });
 
 // When serverless offline start, access below

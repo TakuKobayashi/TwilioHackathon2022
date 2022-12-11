@@ -3,7 +3,14 @@ import bodyParser from 'body-parser';
 import { parse } from 'query-string';
 import twilio from 'twilio';
 import axios from 'axios';
-import { recordTwiml, dialTwiml } from '../../commons/twilio';
+import path from 'path';
+import {
+  recordTwiml,
+  dialTwiml,
+  downloadRecordingFileStream,
+  uploadToS3RecordingFileStream,
+  transcribeRecordFile,
+} from '../../commons/twilio';
 import { getCurrentInvoke } from '@vendia/serverless-express';
 import { getCurrentBaseUrl } from 'src/commons/util';
 
@@ -130,7 +137,6 @@ twilioWebhookRouter.post('/gather_dtmf_handler', async (req, res) => {
       responseString = dialTwiml({
         toPhoneNumber: '転送したい転送先の電話番号',
         dialCallbackUrl: currentBaseUrl + '/webhooks/twilio/redirect_dial_handler',
-        // referUrl: currentBaseUrl + '/webhooks/twilio/dial_refer_handler',
       });
       // 2が押された時の処理
     } else if (payload.Digits === '2') {
@@ -217,6 +223,14 @@ twilioWebhookRouter.post('/recording_status_handler', async (req, res) => {
   }
   */
   console.log(payload);
+  const downloadResponse = await downloadRecordingFileStream(`${payload.RecordingUrl}.wav`);
+  const inputKey = `RecordingFiles/${payload.RecordingSid}.wav`;
+  await uploadToS3RecordingFileStream(inputKey, downloadResponse.data);
+  await transcribeRecordFile({
+    jobName: payload.RecordingSid,
+    inputKey: inputKey,
+    outputKey: path.join(process.env.TRANSCRIBE_RESULT_PREFIX_KEY, `${payload.RecordingSid}.json`),
+  });
   res.send('ok');
 });
 

@@ -1,4 +1,19 @@
 import twilio from 'twilio';
+import axios, { AxiosResponse } from 'axios';
+import { S3Client, CompleteMultipartUploadCommandOutput, AbortMultipartUploadCommandOutput } from '@aws-sdk/client-s3';
+import { Upload } from '@aws-sdk/lib-storage';
+import {
+  TranscribeClient,
+  StartTranscriptionJobCommand,
+  StartTranscriptionJobCommandInput,
+  StartTranscriptionJobCommandOutput,
+  DeleteTranscriptionJobCommand,
+  DeleteTranscriptionJobCommandInput,
+  DeleteTranscriptionJobCommandOutput,
+  ListTranscriptionJobsCommand,
+  ListTranscriptionJobsCommandInput,
+  ListTranscriptionJobsCommandOutput,
+} from '@aws-sdk/client-transcribe';
 
 const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
 const VoiceResponse = twilio.twiml.VoiceResponse;
@@ -65,11 +80,11 @@ export function gatherTwiml(actionUrl: string, src_user_display_name?: string, t
 export function dialTwiml({
   toPhoneNumber,
   dialCallbackUrl,
-//  referUrl,
-}: {
+}: //  referUrl,
+{
   toPhoneNumber: string;
   dialCallbackUrl: string;
-//  referUrl: string;
+  //  referUrl: string;
 }): string {
   const twiml = new VoiceResponse();
   // dialで電話を転送する
@@ -84,8 +99,8 @@ export function dialTwiml({
     {
       action: dialCallbackUrl,
       method: 'POST',
-//      referUrl: referUrl,
-//      referMethod: 'POST',
+      //      referUrl: referUrl,
+      //      referMethod: 'POST',
     },
     toPhoneNumber,
   );
@@ -118,4 +133,88 @@ export function recordTwiml({
     transcribeCallback: transcribeCallbackUrl,
   });
   return twiml.toString();
+}
+
+export async function downloadRecordingFileStream(recordingUrl: string): Promise<AxiosResponse<any, any>> {
+  return axios.get(recordingUrl, {
+    responseType: 'stream',
+    auth: {
+      username: process.env.TWILIO_ACCOUNT_SID,
+      password: process.env.TWILIO_AUTH_TOKEN,
+    },
+  });
+}
+
+export async function uploadToS3RecordingFileStream(
+  uploadKey: string,
+  streamData: any,
+): Promise<CompleteMultipartUploadCommandOutput | AbortMultipartUploadCommandOutput> {
+  const s3Client = new S3Client({ region: process.env.AWS_REGION });
+  const upload = new Upload({
+    client: s3Client,
+    params: {
+      Bucket: process.env.S3_BUCKERT_NAME,
+      Key: uploadKey,
+      Body: streamData,
+    },
+  });
+  /*
+  upload.on('httpUploadProgress', (progress) => {
+    console.log(progress)
+  })
+  */
+  return upload.done();
+}
+
+export async function transcribeRecordFile({
+  jobName,
+  inputKey,
+  outputKey,
+  languageCode = 'ja-JP',
+  mediaFormat = 'wav',
+}: {
+  jobName: string;
+  inputKey: string;
+  outputKey: string;
+  languageCode: string;
+  mediaFormat: string;
+}): Promise<StartTranscriptionJobCommandOutput> {
+  const transcribeClient = new TranscribeClient({ region: process.env.AWS_REGION });
+  // JobがダブルとStartさせる時にエラーになるのでダブりをチェックして、Jobがあったら消す
+  const jobList = await loadListTranscribeJobs({ containJobName: jobName });
+  if (jobList.TranscriptionJobSummaries.length > 0) {
+    const deleteTranscribePromises = [];
+    for (const summary of jobList.TranscriptionJobSummaries) {
+      deleteTranscribePromises.push(deleteTranscribeJob({ jobName: summary.TranscriptionJobName }));
+    }
+    await Promise.all(deleteTranscribePromises);
+  }
+  const params: StartTranscriptionJobCommandInput = {
+    TranscriptionJobName: jobName,
+    LanguageCode: languageCode,
+    MediaFormat: mediaFormat,
+    Media: { MediaFileUri: `s3://${process.env.S3_BUCKERT_NAME}/${inputKey}` },
+    OutputBucketName: process.env.S3_BUCKERT_NAME,
+    OutputKey: outputKey,
+  };
+  const command = new StartTranscriptionJobCommand(params);
+  return transcribeClient.send(command);
+}
+
+export async function deleteTranscribeJob({ jobName }: { jobName: string }): Promise<DeleteTranscriptionJobCommandOutput> {
+  const transcribeClient = new TranscribeClient({ region: process.env.AWS_REGION });
+  const params: DeleteTranscriptionJobCommandInput = {
+    TranscriptionJobName: jobName,
+  };
+  const command = new DeleteTranscriptionJobCommand(params);
+  return transcribeClient.send(command);
+}
+
+export async function loadListTranscribeJobs({ containJobName }: { containJobName: string }): Promise<ListTranscriptionJobsCommandOutput> {
+  const transcribeClient = new TranscribeClient({ region: process.env.AWS_REGION });
+  const params: ListTranscriptionJobsCommandInput = {
+    JobNameContains: containJobName,
+  };
+  const command = new ListTranscriptionJobsCommand(params);
+  return transcribeClient.send(command);
 }
