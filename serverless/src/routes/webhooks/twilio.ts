@@ -20,8 +20,6 @@ twilioWebhookRouter.get('/', async (req: Request, res: Response, next: NextFunct
 });
 
 twilioWebhookRouter.post('/call_handler', async (req, res) => {
-  console.log('/call_handler');
-  console.log(req.body);
   const payload = req.body;
   // const payload = parse(req.body);
   // payloadには以下のようなデータが送られてくる
@@ -86,9 +84,8 @@ twilioWebhookRouter.post('/call_handler', async (req, res) => {
 });
 
 twilioWebhookRouter.post('/gather_dtmf_handler', async (req, res) => {
-  console.log('/gather_dtmf_handler');
-  console.log(req.body);
-  const payload = parse(req.body);
+  const payload = req.body;
+  // const payload = parse(req.body);
   // payloadには以下のようなデータが送られてくる
   /*
   {
@@ -161,7 +158,8 @@ twilioWebhookRouter.post('/gather_dtmf_handler', async (req, res) => {
 
 // 電話転送する時に呼ばれるメソッド
 twilioWebhookRouter.post('/redirect_dial_handler', async (req, res) => {
-  const payload = parse(req.body);
+  const payload = req.body;
+  // const payload = parse(req.body);
   // payloadには以下のようなデータが送られてくる
   /*
   {
@@ -201,7 +199,8 @@ twilioWebhookRouter.post('/redirect_dial_handler', async (req, res) => {
 
 // 録音した結果の受け取り口(transcribeよりも先の呼ばれる)
 twilioWebhookRouter.post('/recording_status_handler', async (req, res) => {
-  const payload = parse(req.body);
+  const payload = req.body;
+  // const payload = parse(req.body);
   // payloadには以下のようなデータが送られてくる
   /*
   {
@@ -222,7 +221,8 @@ twilioWebhookRouter.post('/recording_status_handler', async (req, res) => {
 });
 
 twilioWebhookRouter.post('/transcribe_handler', async (req, res) => {
-  const payload = parse(req.body);
+  const payload = req.body;
+  // const payload = parse(req.body);
   console.log(payload);
   /*
   {
