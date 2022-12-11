@@ -10,6 +10,9 @@ import {
   DeleteTranscriptionJobCommand,
   DeleteTranscriptionJobCommandInput,
   DeleteTranscriptionJobCommandOutput,
+  ListTranscriptionJobsCommand,
+  ListTranscriptionJobsCommandInput,
+  ListTranscriptionJobsCommandOutput,
 } from '@aws-sdk/client-transcribe';
 
 const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
@@ -177,6 +180,15 @@ export async function transcribeRecordFile({
   mediaFormat: string;
 }): Promise<StartTranscriptionJobCommandOutput> {
   const transcribeClient = new TranscribeClient({ region: process.env.AWS_REGION });
+  // JobがダブルとStartさせる時にエラーになるのでダブりをチェックして、Jobがあったら消す
+  const jobList = await loadListTranscribeJobs({ containJobName: jobName });
+  if (jobList.TranscriptionJobSummaries.length > 0) {
+    const deleteTranscribePromises = [];
+    for (const summary of jobList.TranscriptionJobSummaries) {
+      deleteTranscribePromises.push(deleteTranscribeJob({ jobName: summary.TranscriptionJobName }));
+    }
+    await Promise.all(deleteTranscribePromises);
+  }
   const params: StartTranscriptionJobCommandInput = {
     TranscriptionJobName: jobName,
     LanguageCode: languageCode,
@@ -195,5 +207,14 @@ export async function deleteTranscribeJob({ jobName }: { jobName: string }): Pro
     TranscriptionJobName: jobName,
   };
   const command = new DeleteTranscriptionJobCommand(params);
+  return transcribeClient.send(command);
+}
+
+export async function loadListTranscribeJobs({ containJobName }: { containJobName: string }): Promise<ListTranscriptionJobsCommandOutput> {
+  const transcribeClient = new TranscribeClient({ region: process.env.AWS_REGION });
+  const params: ListTranscriptionJobsCommandInput = {
+    JobNameContains: containJobName,
+  };
+  const command = new ListTranscriptionJobsCommand(params);
   return transcribeClient.send(command);
 }
