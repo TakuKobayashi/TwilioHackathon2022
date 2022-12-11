@@ -2,7 +2,7 @@ import { NextFunction, Request, Response } from 'express';
 const { getCurrentInvoke } = require('@vendia/serverless-express');
 import bodyParser from 'body-parser';
 import { getUserIds, trimUserIds, trimPrefixWord } from 'src/commons/slack';
-import { addRecords, searchRecords, updateRecord, getUserDisplayName } from 'src/commons/kintone';
+import { addRecords, searchRecords, updateRecord, getUserInfo } from 'src/commons/kintone';
 
 const express = require('express');
 const slackWebhookRouter = express.Router();
@@ -114,7 +114,7 @@ slackWebhookRouter.post('/recieved_event', async (req: Request, res: Response, n
     const event = webhookBody.event;
 
     // チャンネルに"!gentlecall"から始まるテキストが投稿された時の処理
-    if(event.type == "message" && event.text.startsWith('!gentlecall')){
+    if(event.type == "message" && event.text && event.text.startsWith('!gentlecall')){
       console.log('message was posted!');
       const text = event.text;
 
@@ -126,12 +126,12 @@ slackWebhookRouter.post('/recieved_event', async (req: Request, res: Response, n
       if(userIds) {
         console.log('mentioned!');
         console.log(event);
-        const srcUserDisplayName = await getUserDisplayName(event.user);
+        const [srcUserDisplayName, srcUserPhoneNumber] = await getUserInfo(event.user);
         console.log('srcUserDisplayName');
         console.log(srcUserDisplayName);
 
         await Promise.all(userIds.map(async userId => {
-          const dstUserDisplayName = await getUserDisplayName(userId);
+          const [dstUserDisplayName, dstUserPhoneNumber]  = await getUserInfo(userId);
           console.log('dstUserDisplayName');
           console.log(dstUserDisplayName);
           return {
@@ -141,11 +141,17 @@ slackWebhookRouter.post('/recieved_event', async (req: Request, res: Response, n
             "src_user_display_name": {
               "value": srcUserDisplayName
             },
+            "src_user_phone_number": {
+              "value": srcUserPhoneNumber
+            },
             "dst_user_id": {
               "value": userId
             },
             "dst_user_display_name": {
               "value": dstUserDisplayName
+            },
+            "dst_user_phone_number": {
+              "value": dstUserPhoneNumber
             },
             "text": {
               "value": trimPrefixWord(trimUserIds(text))
