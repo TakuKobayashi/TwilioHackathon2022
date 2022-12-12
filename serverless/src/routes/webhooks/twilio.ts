@@ -13,6 +13,7 @@ import {
 } from '../../commons/twilio';
 import { getCurrentInvoke } from '@vendia/serverless-express';
 import { getCurrentBaseUrl } from 'src/commons/util';
+import { sendSlackMessage } from 'src/commons/slack';
 
 const VoiceResponse = twilio.twiml.VoiceResponse;
 
@@ -259,6 +260,10 @@ twilioWebhookRouter.post('/transcribe_handler', async (req, res) => {
     url: 'このwebhookの情報を送ったURL'
   }
   */
+  const transcribeText = payload.TranscriptionText;
+  console.log(transcribeText);
+  sendSlackMessage(transcribeText);
+
   res.send('ok');
 });
 
