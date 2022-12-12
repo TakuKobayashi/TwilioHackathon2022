@@ -176,8 +176,8 @@ export async function transcribeRecordFile({
   jobName: string;
   inputKey: string;
   outputKey: string;
-  languageCode: string;
-  mediaFormat: string;
+  languageCode?: string;
+  mediaFormat?: string;
 }): Promise<StartTranscriptionJobCommandOutput> {
   const transcribeClient = new TranscribeClient({ region: process.env.AWS_REGION });
   // JobがダブルとStartさせる時にエラーになるのでダブりをチェックして、Jobがあったら消す
