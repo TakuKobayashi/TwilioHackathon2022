@@ -5,6 +5,7 @@ import bodyParser from 'body-parser';
 import { getUserIds, trimUserIds, trimPrefixWord } from 'src/commons/slack';
 import { addRecords, searchRecords, updateRecord, getUserInfo } from 'src/commons/kintone';
 import { getCurrentBaseUrl } from 'src/commons/util';
+import { sendSQSMessage } from '../../commons/aws-sqs';
 
 const express = require('express');
 const slackWebhookRouter = express.Router();
@@ -189,8 +190,11 @@ slackWebhookRouter.post('/recieved_event', async (req: Request, res: Response, n
                 channel: newRecord.channel.value,
                 text: newRecord.text.value,
               };
-              const response = await axios.post(currentBaseUrl + '/notify_immediately', sendData);
-              return response;
+              // メンション付きのユーザーにすぐに発信するための仮の関数
+              return sendSQSMessage({
+                delaySeconds: 20,
+                messageBodyObject: sendData
+              });
             })).then(result => {
               console.log(result);
             }).catch(e => {
