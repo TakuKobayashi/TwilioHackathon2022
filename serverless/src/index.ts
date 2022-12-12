@@ -44,7 +44,7 @@ app.post('/notify_immediately', async (req, res) => {
   const currentBaseUrl = getCurrentBaseUrl(req);
 
   // メンション付きのユーザーにすぐに発信するための仮の関数
-  const data = await sendMockSQSMessage({
+  const data = await sendSQSMessage({
     delaySeconds: 20,
     messageBodyObject: {
       toPhoneNumber: req.body.toPhoneNumber,
