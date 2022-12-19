@@ -48,6 +48,12 @@ const serverlessConfiguration: AWS = {
             Action: ['logs:CreateLogGroup', 'logs:CreateLogStream', 'logs:PutLogEvents'],
             Resource: ['*'],
           },
+          {
+            // SQSを送るためのIAMを追加する必要があるらしい
+            Effect: 'Allow',
+            Action: ['sqs:SendMessage'],
+            Resource: [arnName],
+          },
         ],
       },
     },
