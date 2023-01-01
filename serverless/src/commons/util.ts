@@ -1,14 +1,5 @@
-import { getCurrentInvoke } from '@vendia/serverless-express';
-import { Request } from 'express';
 import { gatherTwiml, twilioCreateCall } from './twilio';
 import { searchRecords, updateRecord } from './kintone';
-
-export function getCurrentBaseUrl(req: Request) {
-  const currentInvoke = getCurrentInvoke();
-  const currentBaseUrl = [req.protocol + '://' + req.get('host'), currentInvoke.event.requestContext.stage].join('/');
-  console.log('currentBaseUrl: ' + currentBaseUrl);
-  return currentBaseUrl;
-}
 
 export async function callRoutine({
   currentBaseUrl,
