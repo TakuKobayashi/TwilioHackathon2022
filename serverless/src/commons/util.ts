@@ -2,7 +2,6 @@ import { gatherTwiml, twilioCreateCall } from './twilio';
 import { searchRecords, updateRecord } from './kintone';
 
 export async function callRoutine({
-  currentBaseUrl,
   src_user_display_name,
   src_user_id,
   dst_user_id,
@@ -11,7 +10,6 @@ export async function callRoutine({
   channel,
   text,
 }: {
-  currentBaseUrl: string;
   src_user_display_name: string;
   src_user_id: string;
   dst_user_id: string;
@@ -20,11 +18,11 @@ export async function callRoutine({
   channel: string;
   text: string;
 }) {
-  const twimlString = gatherTwiml(currentBaseUrl + '/webhooks/twilio/gather_dtmf_handler', src_user_display_name, text);
+  const twimlString = gatherTwiml(process.env.APP_ROOT_URL + '/webhooks/twilio/gather_dtmf_handler', src_user_display_name, text);
   await twilioCreateCall({
     twimlString: twimlString,
     toPhoneNumber: toPhoneNumber,
-    statusCallbackUrl: currentBaseUrl + '/webhooks/twilio/call_handler',
+    statusCallbackUrl: process.env.APP_ROOT_URL + '/webhooks/twilio/call_handler',
   });
   const query =
     'src_user_id = "' +
