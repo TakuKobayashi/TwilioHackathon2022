@@ -1,5 +1,6 @@
 import { S3Handler, S3Event, Context } from 'aws-lambda';
 import { S3Client, GetObjectCommand, GetObjectCommandInput } from '@aws-sdk/client-s3';
+import { sendSlackMessage } from './commons/slack';
 
 export const handler: S3Handler = async (event: S3Event, context: Context) => {
   for (const record of event.Records) {
@@ -123,6 +124,7 @@ export const handler: S3Handler = async (event: S3Event, context: Context) => {
         // 文字起こしした文章全体
         const transcriptString = transcriptStrings.join('');
         console.log(transcriptString);
+        await sendSlackMessage(transcriptString);
       }
     }
   }

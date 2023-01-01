@@ -13,7 +13,7 @@ import {
   twilioSendSMS,
 } from '../../commons/twilio';
 import { getCurrentInvoke } from '@vendia/serverless-express';
-import { sendSlackMessage } from 'src/commons/slack';
+import { sendSlackMessage } from '../../commons/slack';
 
 const VoiceResponse = twilio.twiml.VoiceResponse;
 
