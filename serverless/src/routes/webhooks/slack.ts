@@ -9,8 +9,8 @@ import { sendSQSMessage } from '../../commons/aws-sqs';
 
 const express = require('express');
 const slackWebhookRouter = express.Router();
-// slackWebhookRouter.use(bodyParser.text({ type: "application/json" }));
-// slackWebhookRouter.use(bodyParser.urlencoded({ extended: false }));
+slackWebhookRouter.use(bodyParser.text({ type: "application/json" }));
+slackWebhookRouter.use(bodyParser.urlencoded({ extended: false }));
 
 slackWebhookRouter.get('/', async (req: Request, res: Response, next: NextFunction) => {
   res.json({ message: 'hello slack webhook' });
