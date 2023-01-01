@@ -64,7 +64,7 @@ const serverlessConfiguration: AWS = {
       S3_BUCKERT_NAME: bucketName,
       TRANSCRIBE_RESULT_PREFIX_KEY: transcribeResultPrefixKey,
       // SQSからTwilioのwebhookを指定できるようにするために指定、テストしたい環境によって変更する必要があります。
-      APP_ROOT_URL: "https://s5bicmgli7.execute-api.ap-northeast-1.amazonaws.com/production",
+      APP_ROOT_URL: 'https://s5bicmgli7.execute-api.ap-northeast-1.amazonaws.com/production',
     },
   },
   resources: {
