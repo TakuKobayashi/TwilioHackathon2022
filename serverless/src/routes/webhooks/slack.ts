@@ -1,15 +1,12 @@
 import { NextFunction, Request, Response } from 'express';
-const { getCurrentInvoke } = require('@vendia/serverless-express');
-import axios, { AxiosResponse } from 'axios';
 import bodyParser from 'body-parser';
 import { getUserIds, trimUserIds, trimPrefixWord } from 'src/commons/slack';
 import { addRecords, searchRecords, updateRecord, getUserInfo } from 'src/commons/kintone';
-import { getCurrentBaseUrl } from 'src/commons/util';
 import { sendSQSMessage } from '../../commons/aws-sqs';
 
 const express = require('express');
 const slackWebhookRouter = express.Router();
-slackWebhookRouter.use(bodyParser.text({ type: "application/json" }));
+slackWebhookRouter.use(bodyParser.text({ type: 'application/json' }));
 slackWebhookRouter.use(bodyParser.urlencoded({ extended: false }));
 
 slackWebhookRouter.get('/', async (req: Request, res: Response, next: NextFunction) => {
