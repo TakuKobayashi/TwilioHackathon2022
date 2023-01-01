@@ -72,7 +72,7 @@ twilioWebhookRouter.post('/call_handler', async (req, res) => {
   const callStatus = payload.CallStatus;
   console.log('callStatus: ' + callStatus);
 
-  switch(callStatus) {
+  switch (callStatus) {
     case 'completed':
       // 電話を受け取った場合、何もしない
       break;

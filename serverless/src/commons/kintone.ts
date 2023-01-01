@@ -1,20 +1,20 @@
 'use strict';
 
 require('dotenv').config();
-const { KintoneRestAPIClient } = require("@kintone/rest-api-client");
+const { KintoneRestAPIClient } = require('@kintone/rest-api-client');
 
 // クライアントの作成
 const messagesClient = new KintoneRestAPIClient({
   baseUrl: process.env.KINTONE_BASE_URL,
   auth: {
-    apiToken: process.env.KINTONE_MESSAGES_API_TOKEN
+    apiToken: process.env.KINTONE_MESSAGES_API_TOKEN,
   },
 });
 
 const usersClient = new KintoneRestAPIClient({
   baseUrl: process.env.KINTONE_BASE_URL,
   auth: {
-    apiToken: process.env.KINTONE_USERS_API_TOKEN
+    apiToken: process.env.KINTONE_USERS_API_TOKEN,
   },
 });
 
@@ -68,7 +68,7 @@ export async function addRecords(params) {
   const { records } = params;
   return await messagesClient.record.addRecords({
     app: Number(process.env.KINTONE_MESSAGES_APP_ID),
-    records: records
+    records: records,
   });
 }
 
@@ -79,7 +79,7 @@ export async function searchRecords(params) {
     app: Number(process.env.KINTONE_MESSAGES_APP_ID),
     fields: fields,
     query: query,
-    totalCount: true
+    totalCount: true,
   });
 }
 
@@ -90,7 +90,7 @@ export async function searchUsersRecords(params) {
     app: Number(process.env.KINTONE_USERS_APP_ID),
     fields: fields,
     query: query,
-    totalCount: true
+    totalCount: true,
   });
 }
 
@@ -100,7 +100,7 @@ export async function updateRecord(params) {
   return await messagesClient.record.updateRecord({
     app: Number(process.env.KINTONE_MESSAGES_APP_ID),
     id: id,
-    record: record
+    record: record,
   });
 }
 
@@ -114,20 +114,20 @@ export async function getUserInfo(user_id) {
   const query = 'user_id = "' + user_id + '"';
   const response = await searchUsersRecords({
     query: query,
-    fields: ['display_name', 'phone_number']
+    fields: ['display_name', 'phone_number'],
   });
 
-  if(!response) {
+  if (!response) {
     console.log('レスポンスが返って来ていません');
     return '';
-  }else {
+  } else {
     const totalCount = Number(response.totalCount);
-    if(totalCount === 1) {
+    if (totalCount === 1) {
       return [response.records[0].display_name.value, response.records[0].phone_number.value];
-    }else if(totalCount >= 2) {
+    } else if (totalCount >= 2) {
       console.log('該当のレコードが複数存在します');
       return '';
     }
     return '';
   }
-};
+}

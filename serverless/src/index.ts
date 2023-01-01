@@ -22,9 +22,11 @@ import { searchRecords, updateRecord } from './commons/kintone';
 const app = express();
 
 // json形式のparseに必要
-app.use(bodyParser.urlencoded({
-  extended: true
-}));
+app.use(
+  bodyParser.urlencoded({
+    extended: true,
+  }),
+);
 app.use(bodyParser.json());
 
 app.use('/platforms/line/notify', lineNotifyRouter);
@@ -54,8 +56,8 @@ app.post('/notify_immediately', async (req, res) => {
       timestamp: req.body.timestamp,
       channel: req.body.channel,
       text: req.body.text,
-      currentBaseUrl: currentBaseUrl
-    }
+      currentBaseUrl: currentBaseUrl,
+    },
   });
   console.log('notify_immediately_data');
   console.log(data);
@@ -84,61 +86,70 @@ app.post('/create_twilio_call', async (req, res) => {
   const channel = req.body.channel;
   const text = req.body.text;
 
-  const twimlString = gatherTwiml(
-    currentBaseUrl + '/webhooks/twilio/gather_dtmf_handler',
-    src_user_display_name,
-    text
-  );
+  const twimlString = gatherTwiml(currentBaseUrl + '/webhooks/twilio/gather_dtmf_handler', src_user_display_name, text);
   await twilioCreateCall({
     twimlString: twimlString,
     toPhoneNumber: req.body.toPhoneNumber,
     statusCallbackUrl: currentBaseUrl + '/webhooks/twilio/call_handler',
-  }).then(async () => {
-    // 電話をかけたらkintoneの該当レコードのステータスをfalse(空の配列)にする
-    const query = 'src_user_id = "' + src_user_id + '" and dst_user_id = "' + dst_user_id + '" and timestamp = "' + timestamp + '" and channel = "' + channel + '"';
-    const searchRecordsResponse = await searchRecords({
-      query: query,
-      fields: ['id']
-    });
+  })
+    .then(async () => {
+      // 電話をかけたらkintoneの該当レコードのステータスをfalse(空の配列)にする
+      const query =
+        'src_user_id = "' +
+        src_user_id +
+        '" and dst_user_id = "' +
+        dst_user_id +
+        '" and timestamp = "' +
+        timestamp +
+        '" and channel = "' +
+        channel +
+        '"';
+      const searchRecordsResponse = await searchRecords({
+        query: query,
+        fields: ['id'],
+      });
 
-    console.log('searchRecordsResponse');
-    console.log(searchRecordsResponse);
+      console.log('searchRecordsResponse');
+      console.log(searchRecordsResponse);
 
-    if(!searchRecordsResponse) {
-      console.log('レスポンスが返って来ていません');
-    }else {
-      const totalCount = Number(searchRecordsResponse.totalCount);
-      if(totalCount === 1) {
-        // 該当のレコードが1つのみ存在すれば、そのレコードのcallのステータスをfalseに更新する
-        const recordId = searchRecordsResponse.records[0].id.value;
-        console.log('recordId');
-        console.log(recordId);
-        await updateRecord({
-          id: recordId,
-          record: {
-            "status": {
-              "value": []
+      if (!searchRecordsResponse) {
+        console.log('レスポンスが返って来ていません');
+      } else {
+        const totalCount = Number(searchRecordsResponse.totalCount);
+        if (totalCount === 1) {
+          // 該当のレコードが1つのみ存在すれば、そのレコードのcallのステータスをfalseに更新する
+          const recordId = searchRecordsResponse.records[0].id.value;
+          console.log('recordId');
+          console.log(recordId);
+          await updateRecord({
+            id: recordId,
+            record: {
+              status: {
+                value: [],
+              },
             },
-          }
-        }).then(result => {
-          console.log('update record success');
-        }).catch(err => {
-          console.log(err);
-        });
-      }else if(totalCount >= 2) {
-        console.log('該当のレコードが複数存在します');
+          })
+            .then((result) => {
+              console.log('update record success');
+            })
+            .catch((err) => {
+              console.log(err);
+            });
+        } else if (totalCount >= 2) {
+          console.log('該当のレコードが複数存在します');
+        }
       }
-    }
 
-    res.json({
-      status: 'OK',
-      data: {
-        toPhoneNumber: req.body.toPhoneNumber,
-      }
+      res.json({
+        status: 'OK',
+        data: {
+          toPhoneNumber: req.body.toPhoneNumber,
+        },
+      });
+    })
+    .catch((e) => {
+      res.json({ status: 'NG', error: e });
     });
-  }).catch(e => {
-    res.json({ status: 'NG', error: e });
-  });
 });
 
 app.get('/twilio_sms_test', async (req, res) => {

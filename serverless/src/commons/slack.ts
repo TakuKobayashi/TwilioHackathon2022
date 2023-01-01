@@ -12,11 +12,13 @@ export function getUserId(mentionsUserId) {
 }
 
 export async function getUserIds(text) {
-  if(!text) return null;
+  if (!text) return null;
   const mentionsUserIds = await getMentionsUserIds(text);
-  const userIds = mentionsUserIds ? mentionsUserIds.map(mentionsUserId => {
-    return getUserId(mentionsUserId);
-  }) : null;
+  const userIds = mentionsUserIds
+    ? mentionsUserIds.map((mentionsUserId) => {
+        return getUserId(mentionsUserId);
+      })
+    : null;
   return userIds;
 }
 
@@ -39,4 +41,4 @@ export async function sendSlackMessage(message) {
   } catch (error) {
     console.log(error);
   }
-};
+}
