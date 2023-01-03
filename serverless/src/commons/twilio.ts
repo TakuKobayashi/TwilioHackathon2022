@@ -63,16 +63,18 @@ export function gatherTwiml(actionUrl: string, src_user_display_name?: string, t
     timeout: 30, // 入力をうけつけてくれる秒数
     numDigit: 1, // 相手からプッシュ操作を1桁待つ
   });
-  const messageHead = src_user_display_name && text
-    ? `${src_user_display_name}さんから緊急のメッセージがきています！メッセージに反応してください！メッセージ内容は「${text}」です。`
-    : 'メッセージに反応してください！';
-  const message = messageHead + '1を押したら電話をかけます。2を押したら要件の内容をメッセージに残してお伝えします。最後にシャープキーを押してください。';
+  const messageHead =
+    src_user_display_name && text
+      ? `${src_user_display_name}さんから緊急のメッセージがきています！メッセージに反応してください！メッセージ内容は「${text}」です。`
+      : 'メッセージに反応してください！';
+  const message =
+    messageHead + '1を押したら電話をかけます。2を押したら要件の内容をメッセージに残してお伝えします。最後にシャープキーを押してください。';
   gather.say(
     {
       language: 'ja-JP',
       voice: 'woman',
     },
-    message
+    message,
   );
   return twiml.toString();
 }

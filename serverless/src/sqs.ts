@@ -1,6 +1,8 @@
 import { SQSHandler, SQSEvent, Context } from 'aws-lambda';
+import { callRoutine } from './commons/util';
 
 export const handler: SQSHandler = async (event: SQSEvent, context: Context) => {
+  console.log('SQS recieved');
   for (const record of event.Records) {
     /*
     {
@@ -36,6 +38,7 @@ export const handler: SQSHandler = async (event: SQSEvent, context: Context) => 
       awsRegion: 'ap-northeast-1'
     }
     */
-    console.log(record);
+    const recievedMessageData = JSON.parse(record.body);
+    await callRoutine(recievedMessageData);
   }
 };

@@ -28,7 +28,7 @@ const serverlessConfiguration: AWS = {
     runtime: 'nodejs16.x',
     region: regionName,
     timeout: 900,
-    memorySize: 256,
+    memorySize: 512,
     apiGateway: {
       minimumCompressionSize: 1024,
       shouldStartNameWithService: true,
@@ -48,6 +48,12 @@ const serverlessConfiguration: AWS = {
             Action: ['logs:CreateLogGroup', 'logs:CreateLogStream', 'logs:PutLogEvents'],
             Resource: ['*'],
           },
+          {
+            // SQSを送るためのIAMを追加する必要があるらしい
+            Effect: 'Allow',
+            Action: ['sqs:SendMessage'],
+            Resource: [arnName],
+          },
         ],
       },
     },
@@ -57,6 +63,8 @@ const serverlessConfiguration: AWS = {
       QUEUE_URL: queueUrl,
       S3_BUCKERT_NAME: bucketName,
       TRANSCRIBE_RESULT_PREFIX_KEY: transcribeResultPrefixKey,
+      // SQSからTwilioのwebhookを指定できるようにするために指定、テストしたい環境によって変更する必要があります。
+      APP_ROOT_URL: 'https://s5bicmgli7.execute-api.ap-northeast-1.amazonaws.com/production',
     },
   },
   resources: {

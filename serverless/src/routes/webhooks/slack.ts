@@ -1,23 +1,19 @@
 import { NextFunction, Request, Response } from 'express';
-const { getCurrentInvoke } = require('@vendia/serverless-express');
-import axios, { AxiosResponse } from 'axios';
 import bodyParser from 'body-parser';
 import { getUserIds, trimUserIds, trimPrefixWord } from 'src/commons/slack';
 import { addRecords, searchRecords, updateRecord, getUserInfo } from 'src/commons/kintone';
-import { getCurrentBaseUrl } from 'src/commons/util';
+import { sendSQSMessage } from '../../commons/aws-sqs';
 
 const express = require('express');
 const slackWebhookRouter = express.Router();
-// slackWebhookRouter.use(bodyParser.text({ type: "application/json" }));
-// slackWebhookRouter.use(bodyParser.urlencoded({ extended: false }));
+slackWebhookRouter.use(bodyParser.text({ type: 'application/json' }));
+slackWebhookRouter.use(bodyParser.urlencoded({ extended: false }));
 
 slackWebhookRouter.get('/', async (req: Request, res: Response, next: NextFunction) => {
   res.json({ message: 'hello slack webhook' });
 });
 
 slackWebhookRouter.post('/recieved_event', async (req: Request, res: Response, next: NextFunction) => {
-  console.log(req.query)
-  console.log(req.body)
   // メッセージのwebhookを取得した場合の内容
   // {
   //   "token":"...",
@@ -108,149 +104,130 @@ slackWebhookRouter.post('/recieved_event', async (req: Request, res: Response, n
   //}
   const webhookBody = req.body;
   // challengeが行われたときのresponse
-  if(webhookBody.type == 'url_verification'){
-    console.log("url verifacation");
-    res.json({challenge: webhookBody.challenge});
-  // 何かしらのイベント二体するcallback
-  }else if(webhookBody.type == 'event_callback'){
+  if (webhookBody.type == 'url_verification') {
+    res.json({ challenge: webhookBody.challenge });
+    return;
+    // 何かしらのイベントに対するcallback
+  } else if (webhookBody.type == 'event_callback') {
     const event = webhookBody.event;
 
     // チャンネルに"!gentlecall"から始まるテキストが投稿された時の処理
-    if(event.type == "message" && event.text && event.text.startsWith('!gentlecall')){
-      console.log('message was posted!');
+    if (event.type == 'message' && event.text && event.text.startsWith('!gentlecall')) {
       const text = event.text;
 
       const userIds = await getUserIds(text);
-      console.log('userIds');
-      console.log(userIds);
-
       // メンションされていた場合、kintoneにそのデータを追加
-      if(userIds) {
-        console.log('mentioned!');
-        console.log(event);
+      if (userIds) {
         const [srcUserDisplayName, srcUserPhoneNumber] = await getUserInfo(event.user);
-        console.log('srcUserDisplayName');
-        console.log(srcUserDisplayName);
 
-        await Promise.all(userIds.map(async userId => {
-          const [dstUserDisplayName, dstUserPhoneNumber]  = await getUserInfo(userId);
-          console.log('dstUserDisplayName');
-          console.log(dstUserDisplayName);
-          return {
-            "src_user_id": {
-              "value": event.user
-            },
-            "src_user_display_name": {
-              "value": srcUserDisplayName
-            },
-            "src_user_phone_number": {
-              "value": srcUserPhoneNumber
-            },
-            "dst_user_id": {
-              "value": userId
-            },
-            "dst_user_display_name": {
-              "value": dstUserDisplayName
-            },
-            "dst_user_phone_number": {
-              "value": dstUserPhoneNumber
-            },
-            "text": {
-              "value": trimPrefixWord(trimUserIds(text))
-            },
-            "timestamp": {
-              "value": event.ts
-            },
-            "status": {
-              "value": ["true"]
-            },
-            "channel": {
-              "value": event.channel
-            }
-          };
-        })).then((newRecords) => {
-          console.log('newRecords');
-          console.log(newRecords);
-          addRecords({
-            records: newRecords
-          }).then(async () => {
-            console.log('add records success');
-
-            // Twilioによる発信（今は仮でメッセージが来たら即発信）
-            const currentBaseUrl = getCurrentBaseUrl(req);
-
-            await Promise.all(newRecords.map(async newRecord => {
-              const sendData = {
-                toPhoneNumber: newRecord.dst_user_phone_number.value,
-                src_user_id: newRecord.src_user_id.value,
-                src_user_display_name: newRecord.src_user_display_name.value,
-                dst_user_id: newRecord.dst_user_id.value,
-                timestamp: newRecord.timestamp.value,
-                channel: newRecord.channel.value,
-                text: newRecord.text.value,
-              };
-              const response = await axios.post(currentBaseUrl + '/notify_immediately', sendData);
-              return response;
-            })).then(result => {
-              console.log(result);
-            }).catch(e => {
-              console.log(e);
-            });
-          }).catch(err => {
-            console.log(err);
-          });
+        const newRecords = await Promise.all(
+          userIds.map(async (userId) => {
+            const [dstUserDisplayName, dstUserPhoneNumber] = await getUserInfo(userId);
+            console.log('dstUserDisplayName');
+            console.log(dstUserDisplayName);
+            return {
+              src_user_id: {
+                value: event.user,
+              },
+              src_user_display_name: {
+                value: srcUserDisplayName,
+              },
+              src_user_phone_number: {
+                value: srcUserPhoneNumber,
+              },
+              dst_user_id: {
+                value: userId,
+              },
+              dst_user_display_name: {
+                value: dstUserDisplayName,
+              },
+              dst_user_phone_number: {
+                value: dstUserPhoneNumber,
+              },
+              text: {
+                value: trimPrefixWord(trimUserIds(text)),
+              },
+              timestamp: {
+                value: event.ts,
+              },
+              status: {
+                value: ['true'],
+              },
+              channel: {
+                value: event.channel,
+              },
+            };
+          }),
+        );
+        await addRecords({
+          records: newRecords,
         });
+
+        await Promise.all(
+          newRecords.map(async (newRecord) => {
+            const sendData = {
+              toPhoneNumber: newRecord.dst_user_phone_number.value,
+              src_user_id: newRecord.src_user_id.value,
+              src_user_display_name: newRecord.src_user_display_name.value,
+              dst_user_id: newRecord.dst_user_id.value,
+              timestamp: newRecord.timestamp.value,
+              channel: newRecord.channel.value,
+              text: newRecord.text.value,
+            };
+            // メンション付きのユーザーにすぐに発信するための仮の関数
+            return sendSQSMessage({
+              delaySeconds: 20,
+              messageBodyObject: sendData,
+            });
+          }),
+        );
       }
 
       res.json({ status: 'OK' });
-    // リアクションが行われた時の処理
-    }else if(event.type == "reaction_added"){
-      console.log('reaction was added!');
-      console.log(event);
-
+      return;
+      // リアクションが行われた時の処理
+    } else if (event.type == 'reaction_added') {
       const src_user_id = event.item_user;
       const dst_user_id = event.user;
       const timestamp = event.item.ts;
       const channel = event.item.channel;
 
-      const query = 'src_user_id = "' + src_user_id + '" and dst_user_id = "' + dst_user_id + '" and timestamp = "' + timestamp + '" and channel = "' + channel + '"';
+      const query =
+        'src_user_id = "' +
+        src_user_id +
+        '" and dst_user_id = "' +
+        dst_user_id +
+        '" and timestamp = "' +
+        timestamp +
+        '" and channel = "' +
+        channel +
+        '"';
       const searchRecordsResponse = await searchRecords({
         query: query,
-        fields: ['id']
+        fields: ['id'],
       });
-      console.log('searchRecordsResponse');
-      console.log(searchRecordsResponse);
 
-      if(!searchRecordsResponse) {
-        console.log('レスポンスが返って来ていません');
-      }else {
+      if (searchRecordsResponse) {
         const totalCount = Number(searchRecordsResponse.totalCount);
-        if(totalCount === 1) {
+        if (totalCount === 1) {
           // 該当のレコードが1つのみ存在すれば、そのレコードのcallのステータスをfalseに更新する
           const recordId = searchRecordsResponse.records[0].id.value;
-          console.log('recordId');
-          console.log(recordId);
           await updateRecord({
             id: recordId,
             record: {
-              "status": {
-                "value": []
+              status: {
+                value: [],
               },
-            }
-          }).then(result => {
-            console.log('update record success');
-          }).catch(err => {
-            console.log(err);
+            },
           });
-        }else if(totalCount >= 2) {
-          console.log('該当のレコードが複数存在します');
         }
       }
       res.json({ status: 'OK' });
+      return;
     }
   }
-  // console.log(webhookBody)
-  // res.json({challenge: webhookBody.challenge});
+  res.json({ status: 'OK' });
+  return;
 });
 
 export { slackWebhookRouter };
